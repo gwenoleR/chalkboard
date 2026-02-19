@@ -28,6 +28,8 @@ export interface Gym {
   grades: Record<string, string[]>;
   holdsColors: Record<string, string>;
   holdsColorsHexa: Record<string, string[]>;
+  /** Array of [id, [name, ...flags]] tuples — use getRouteTypeName() to resolve */
+  routeTypes?: Array<[number, [string, ...boolean[]]]>;
   /** Maps zone number to zone info */
   zones: Record<string, GymZone>;
   /** SVG floor plan data */

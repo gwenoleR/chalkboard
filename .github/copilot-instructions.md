@@ -309,7 +309,12 @@ app/
     _layout.tsx        ← tab navigation
     index.tsx          ← liste des blocs (wattabloc)
 components/
-  BoulderCard.tsx      ← carte d'un bloc (grade, couleur label, holds color, sends)
+  BoulderCard.tsx      ← carte d'un bloc (grade, route types, holds color badge)
+  BoulderCard.stories.tsx ← Storybook stories
+  GymMap.tsx           ← plan SVG de la salle (zones cliquables)
+  GymMap.stories.tsx   ← Storybook stories
+  HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
+  HoldsColorBadge.stories.tsx ← Storybook stories
   design-system/       ← stories Storybook (ColorPalette, Typography)
   ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
 lib/

@@ -1,3 +1,10 @@
+export interface BoulderPicture {
+  id: string;
+  width: number;
+  ratio: number;
+  crop?: { x: number; y: number; width: number; height: number };
+}
+
 export interface Boulder {
   /** simpleddp stores the DDP id as `id` (not `_id`) */
   id: string;
@@ -5,9 +12,10 @@ export interface Boulder {
   /** 1–8, maps to a color name via Gym.labels */
   label: number;
   grade: string;
-  holdsColor: string;
-  routeTypes: string[];
-  picture?: string;
+  /** Holds color code (numeric key into Gym.holdsColors / Gym.holdsColorsHexa) */
+  holdsColor: number;
+  routeTypes: number[];
+  picture?: BoulderPicture;
   videoId?: string;
   /** Zone number in the gym, maps to Gym.zones */
   zone?: number;
