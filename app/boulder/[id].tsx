@@ -1,24 +1,27 @@
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Drill, MapPin } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import { BoulderStatRow } from '@/components/BoulderStatRow';
+import { FullScreenImage } from '@/components/FullScreenImage';
 import { Text } from '@/components/ui/text';
+import { isLightColor } from '@/lib/color';
 import { useBoulder } from '@/hooks/use-boulder';
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 const HERO_HEIGHT = 340;
-
-/** Returns true if the hex color is light (needs dark text). */
-function isLightHex(hex: string): boolean {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return r * 0.299 + g * 0.587 + b * 0.114 > 186;
-}
+// Extra image height to fill the gap revealed by parallax translation
+const PARALLAX_FACTOR = 0.35;
+const PARALLAX_OVERFLOW = HERO_HEIGHT * PARALLAX_FACTOR;
 
 /** Returns a human-readable relative duration from an ISO date string. */
 function formatAge(isoDate: string): string {
@@ -35,6 +38,16 @@ export default function BoulderDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+
+  // Shared value tracking scroll position for parallax
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+  const imageParallaxStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scrollY.value * PARALLAX_FACTOR }],
+  }));
 
   if (loading) {
     return (
@@ -66,8 +79,11 @@ export default function BoulderDetailScreen() {
   const imageUri = boulder.picture
     ? `${S3}/800/bouldersPics/${boulder.picture.id}.jpg`
     : null;
+  const fullImageUri = boulder.picture
+    ? `${S3}/bouldersPics/${boulder.picture.id}.jpg`
+    : null;
 
-  const heroTextColor = labelHex && isLightHex(labelHex) ? '#111111' : '#ffffff';
+  const heroTextColor = labelHex && isLightColor(labelHex) ? '#111111' : '#ffffff';
 
   const stats = [
     { value: boulder.sentsCount, label: t('boulder.sends') },
@@ -79,10 +95,30 @@ export default function BoulderDetailScreen() {
     <View className="flex-1 bg-background">
       <Stack.Screen options={{ headerShown: false }} />
 
+      {fullImageUri ? (
+        <FullScreenImage
+          uri={fullImageUri}
+          visible={imageModalVisible}
+          onClose={() => setImageModalVisible(false)}
+        />
+      ) : null}
+
       {/* ── Scrollable body ── */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces>
-        {/* Hero image */}
-        <View style={{ height: HERO_HEIGHT }}>
+      <Animated.ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        bounces
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
+        {/* Hero image — clipped container + parallax inner view */}
+        <Pressable
+          style={{ height: HERO_HEIGHT, overflow: 'hidden' }}
+          onPress={imageUri ? () => setImageModalVisible(true) : undefined}
+        >
+          <Animated.View
+            style={[{ height: HERO_HEIGHT + PARALLAX_OVERFLOW }, imageParallaxStyle]}
+          >
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={{ flex: 1 }} contentFit="cover" />
           ) : (
@@ -99,7 +135,8 @@ export default function BoulderDetailScreen() {
               </Text>
             </View>
           )}
-        </View>
+          </Animated.View>
+        </Pressable>
 
         {/* ── White card overlapping hero ── */}
         <View className="rounded-t-3xl bg-background px-6 pt-8" style={{ marginTop: -28 }}>
@@ -169,6 +206,24 @@ export default function BoulderDetailScreen() {
             </>
           ) : null}
 
+          {/* Route setters */}
+          {boulder.routeSetter && boulder.routeSetter.length > 0 ? (
+            <>
+              <View className="h-px bg-border" />
+              <View className="flex-row items-center gap-4 py-5">
+                <Drill size={20} color="#94a3b8" />
+                <View>
+                  <Text className="font-dm-sans text-xs uppercase tracking-widest text-muted-foreground">
+                    {t('boulder.routeSetters')}
+                  </Text>
+                  <Text className="font-dm-sans-medium mt-0.5 text-base">
+                    {boulder.routeSetter.join(', ')}
+                  </Text>
+                </View>
+              </View>
+            </>
+          ) : null}
+
           {/* Age */}
           <View className="h-px bg-border" />
           <View className="flex-row items-center gap-4 py-5">
@@ -192,7 +247,7 @@ export default function BoulderDetailScreen() {
           {/* Spacer so content isn't hidden behind sticky bottom bar */}
           <View style={{ height: 110 }} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ── Floating back button ── */}
       <Pressable

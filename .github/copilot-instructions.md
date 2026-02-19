@@ -308,12 +308,16 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 ```
 app/
   _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, i18n init)
-  (tabs)/
-    _layout.tsx        ← tab navigation
-    index.tsx          ← liste des blocs (wattabloc)
+  index.tsx            ← liste des blocs (wattabloc)
+  boulder/
+    [id].tsx           ← page détail d'un bloc
 components/
   BoulderCard.tsx      ← carte d'un bloc (grade, route types, holds color badge)
   BoulderCard.stories.tsx ← Storybook stories
+  BoulderStatRow.tsx   ← rangée de stats avec séparateurs verticaux (envois, flashs, likes)
+  BoulderStatRow.stories.tsx ← Storybook stories
+  FullScreenImage.tsx  ← visionneuse plein écran avec zoom (pinch, double-tap)
+  FullScreenImage.stories.tsx ← Storybook stories
   GymMap.tsx           ← plan SVG de la salle (zones cliquables)
   GymMap.stories.tsx   ← Storybook stories
   HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
@@ -322,16 +326,19 @@ components/
   ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
 lib/
   ddp/
-    client.ts          ← singleton simpleddp + ensureLoggedIn() (login unique partagé)
+    client.ts          ← singleton simpleddp + ensureLoggedIn() (login unique partagé, survit au fast-refresh via global)
   i18n/
     index.ts           ← config i18next (langue device, fallback fr)
     locales/
       fr.json          ← traductions françaises
       en.json          ← traductions anglaises
+  suppress-lib-warnings.ts ← filtre les warnings de libs tierces (react-native-web, react-navigation)
+  color.ts             ← isLightColor() + contrastColor() (utilitaires couleur partagés)
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge)
 hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
+  use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
 types/

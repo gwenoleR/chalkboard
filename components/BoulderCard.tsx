@@ -7,22 +7,12 @@ import { GymMap } from '@/components/GymMap';
 import { IconBadge } from '@/components/IconBadge';
 import { IconStat } from '@/components/IconStat';
 import { Hold } from '@/lib/icons/hold';
+import { isLightColor } from '@/lib/color';
 import { Text } from '@/components/ui/text';
 import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
-
-/**
- * Returns true if the given hex color is light enough to require dark text.
- * Uses the WCAG relative luminance formula.
- */
-function isLightColor(hex: string): boolean {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return r * 0.299 + g * 0.587 + b * 0.114 > 186;
-}
 
 interface BoulderCardProps {
   boulder: Boulder;

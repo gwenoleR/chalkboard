@@ -11,14 +11,15 @@
   },
   "boulder": {
     "betaBadge": "Beta",
-    "sends": "Envois",
+    "sends": "Enchainés",
     "flashes": "Flashs",
     "likes": "Likes",
     "comments": "Commentaires",
-    "send": "J'ai envoyé !",
+    "send": "J'ai enchainé !",
     "flash": "Flash !",
     "holdsColor": "Couleur des prises",
     "routeTypes": "Style",
+    "routeSetters": "Ouvreurs",
     "openedAgo": "Ouvert depuis {{duration}}"
   }
 }

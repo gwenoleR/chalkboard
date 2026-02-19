@@ -15,6 +15,8 @@ export interface Boulder {
   /** Holds color code (numeric key into Gym.holdsColors / Gym.holdsColorsHexa) */
   holdsColor: number;
   routeTypes: number[];
+  /** Names of the route setters who created this boulder. */
+  routeSetter?: string[];
   picture?: BoulderPicture;
   videosCount: number;
   /** Zone number in the gym, maps to Gym.zones */
