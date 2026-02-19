@@ -2,6 +2,14 @@
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
-    "retry": "Retry"
+    "retry": "Retry",
+    "connectionError": "Connection error"
+  },
+  "gym": {
+    "boulderCount_one": "{{count}} boulder",
+    "boulderCount_other": "{{count}} boulders"
+  },
+  "boulder": {
+    "betaBadge": "Beta"
   }
 }

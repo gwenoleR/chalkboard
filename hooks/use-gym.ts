@@ -4,7 +4,11 @@ import { ensureLoggedIn } from '@/lib/ddp/client';
 import client from '@/lib/ddp/client';
 import type { Gym } from '@/types/gym';
 
-export function useGym(gymId: string) {
+/**
+ * Subscribes to a single gym's info by slug.
+ * Returns null while loading or if the gym is not found.
+ */
+export function useGym(gymId: string): { gym: Gym | null; loading: boolean } {
   const [gym, setGym] = useState<Gym | null>(null);
   const [loading, setLoading] = useState(true);
 

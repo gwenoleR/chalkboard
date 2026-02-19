@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { Check, Heart, MessageCircle, Video } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { GymMap } from '@/components/GymMap';
 import { Text } from '@/components/ui/text';
@@ -9,6 +10,10 @@ import type { Gym } from '@/types/gym';
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 
+/**
+ * Returns true if the given hex color is light enough to require dark text.
+ * Uses the WCAG relative luminance formula.
+ */
 function isLightColor(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -22,6 +27,7 @@ interface BoulderCardProps {
 }
 
 export function BoulderCard({ boulder, gym }: BoulderCardProps) {
+  const { t } = useTranslation();
   const labelHex = gym.labelsHexa?.[String(boulder.label)];
   const holdsKey = String(boulder.holdsColor);
   const holdsName = gym.holdsColors?.[holdsKey];
@@ -57,7 +63,7 @@ export function BoulderCard({ boulder, gym }: BoulderCardProps) {
         {boulder.videosCount > 0 ? (
           <View className="absolute left-3 top-3 flex-row items-center gap-1 rounded-full bg-black/60 px-3 py-1">
             <Video size={12} color="#ffffff" strokeWidth={2} />
-            <Text className="text-xs font-semibold text-white">Beta</Text>
+            <Text className="text-xs font-semibold text-white">{t('boulder.betaBadge')}</Text>
           </View>
         ) : null}
         {/* Holds color badge overlay (top-right) */}

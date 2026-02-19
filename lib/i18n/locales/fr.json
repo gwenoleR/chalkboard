@@ -2,6 +2,14 @@
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur est survenue",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "connectionError": "Erreur de connexion"
+  },
+  "gym": {
+    "boulderCount_one": "{{count}} bloc",
+    "boulderCount_other": "{{count}} blocs"
+  },
+  "boulder": {
+    "betaBadge": "Beta"
   }
 }

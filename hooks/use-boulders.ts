@@ -15,6 +15,10 @@ interface UseBoulders {
   error: string | null;
 }
 
+/**
+ * Subscribes to the boulder list and count for the hardcoded gym.
+ * Reactively fetches active boulders (isClosed: null) sorted by recency.
+ */
 export function useBoulders(): UseBoulders {
   const [boulders, setBoulders] = useState<Boulder[]>([]);
   const [count, setCount] = useState<number | null>(null);
