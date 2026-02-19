@@ -8,9 +8,12 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 
 ## ✨ Features
 
-- 🗺️ Browse boulders by gym, grade, and color
+- 🗺️ Browse boulders by gym, grade, and color — immersive card feed with full-width photos
+- 🖼️ Full-width boulder photos with holds color badge and label dot
+- 📍 Mini gym floor plan on each card with the boulder's zone highlighted
+- 🎬 "Beta" badge on cards that have a demo video
 - ✅ Log sends and flashes
-- 📊 Track your progress and stats over time
+- 📊 Track your progress and stats over time (sends, likes, comments)
 - 🌍 Multi-language support (French & English)
 - 🌙 Light & dark mode
 
@@ -22,7 +25,7 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 | ------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Framework     | [Expo](https://expo.dev) + [Expo Router](https://expo.github.io/router)                                           |
 | Styling       | [NativeWind v4](https://www.nativewind.dev) (Tailwind CSS)                                                        |
-| UI components | [react-native-reusables](https://reactnativereusables.com)                                                        |
+| UI components | [react-native-reusables](https://reactnativereusables.com) + [lucide-react-native](https://lucide.dev) |
 | Backend       | DDP over WebSocket ([simpleddp](https://github.com/Gregivy/simpleddp))                                            |
 | i18n          | [i18next](https://www.i18next.com) + [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/) |
 | Design system | French Rose `#e35f8d` × Teal `#2aab7e` · Outfit + DM Sans                                                         |

@@ -7,7 +7,11 @@ interface GymMapProps {
   map: GymMapData;
   zones: Record<string, GymZone>;
   activeZone: string | null;
-  onZonePress: (zoneId: string) => void;
+  onZonePress?: (zoneId: string) => void;
+  /** Fixed width in px. If omitted, fills the screen minus padding. */
+  width?: number;
+  /** Compact mode: lighter inactive zones, thicker active stroke. */
+  compact?: boolean;
 }
 
 const PADDING = 16;
@@ -50,9 +54,9 @@ function shortenPolyline(pointsStr: string, amount: number): string {
   return pts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 }
 
-export function GymMap({ map, zones, activeZone, onZonePress }: GymMapProps) {
-  const { width } = useWindowDimensions();
-  const svgWidth = width - PADDING * 2;
+export function GymMap({ map, zones, activeZone, onZonePress, width: fixedWidth, compact }: GymMapProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const svgWidth = fixedWidth ?? windowWidth - PADDING * 2;
 
   const [vbX, vbY, vbW, vbH] = map.viewBox.split(' ').map(Number);
   const svgHeight = (svgWidth * vbH) / vbW;
@@ -72,11 +76,11 @@ export function GymMap({ map, zones, activeZone, onZonePress }: GymMapProps) {
             key={zoneId}
             points={shortenedPoints}
             fill="none"
-            stroke={isActive ? '#e35f8d' : '#94a3b8'}
-            strokeWidth={1}
+            stroke={isActive ? '#e35f8d' : compact ? '#d1d5db' : '#94a3b8'}
+            strokeWidth={isActive && compact ? 2.5 : 1}
             strokeLinecap="round"
             strokeLinejoin="round"
-            onPress={() => onZonePress(zoneId)}
+            onPress={onZonePress ? () => onZonePress(zoneId) : undefined}
           />
         );
       })}

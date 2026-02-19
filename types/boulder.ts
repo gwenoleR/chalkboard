@@ -16,7 +16,7 @@ export interface Boulder {
   holdsColor: number;
   routeTypes: number[];
   picture?: BoulderPicture;
-  videoId?: string;
+  videosCount: number;
   /** Zone number in the gym, maps to Gym.zones */
   zone?: number;
   boulderNum?: number;
@@ -30,5 +30,6 @@ export interface Boulder {
   flashesList: string[];
   projectsList: string[];
   likesList: string[];
+  likesCount: number;
   commentsCount: number;
 }

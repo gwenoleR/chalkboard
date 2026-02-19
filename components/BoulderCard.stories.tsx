@@ -47,6 +47,13 @@ const mockGym: Gym = {
     '9': ['#ffeb2b'],
   },
   zones: { '1': { name: 'Bout du Monde' }, '6': { name: 'Dévers' } },
+  map: {
+    viewBox: '0 0 200 120',
+    lines: [
+      { zone: 1, points: '10,20 80,20 80,70 10,70 10,20' },
+      { zone: 6, points: '100,20 190,20 190,100 100,100 100,20' },
+    ],
+  },
   routeTypes: [
     [4, ['Physique', true, true, true, true]],
     [11, ['Dynamique', true, true, false, true]],
@@ -73,7 +80,9 @@ const baseBoulder: Boulder = {
   flashesList: [],
   projectsList: [],
   likesList: [],
+  likesCount: 0,
   commentsCount: 2,
+  videosCount: 0,
 };
 
 const meta: Meta<typeof BoulderCard> = {
@@ -119,6 +128,27 @@ export const DarkLabel: Story = {
 export const EasyGrade: Story = {
   args: {
     boulder: { ...baseBoulder, grade: '4A', label: 1, holdsColor: 3, sentsCount: 0 },
+    gym: mockGym,
+  },
+};
+
+export const WithVideo: Story = {
+  args: {
+    boulder: { ...baseBoulder, videosCount: 1 },
+    gym: mockGym,
+  },
+};
+
+export const WithStats: Story = {
+  args: {
+    boulder: { ...baseBoulder, sentsCount: 24, likesCount: 8, commentsCount: 3 },
+    gym: mockGym,
+  },
+};
+
+export const NoPhoto: Story = {
+  args: {
+    boulder: { ...baseBoulder, picture: undefined },
     gym: mockGym,
   },
 };
