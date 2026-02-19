@@ -100,6 +100,14 @@ const meta: Meta<typeof BoulderCard> = {
 export default meta;
 type Story = StoryObj<typeof BoulderCard>;
 
+export const WithOnPress: Story = {
+  args: {
+    boulder: { ...baseBoulder, sentsCount: 5, likesCount: 2 },
+    gym: mockGym,
+    onPress: () => console.log('Boulder pressed'),
+  },
+};
+
 export const Default: Story = {
   args: { boulder: baseBoulder, gym: mockGym },
 };

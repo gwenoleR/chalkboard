@@ -1,10 +1,10 @@
 import { View } from 'react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import type { LucideProps } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 
 interface IconBadgeProps {
-  icon: LucideIcon;
+  icon: React.ComponentType<LucideProps>;
   label: string;
   /** Background color. Defaults to semi-transparent black. */
   backgroundColor?: string;

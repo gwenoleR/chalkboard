@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Check, Heart, MessageCircle, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -27,9 +27,10 @@ function isLightColor(hex: string): boolean {
 interface BoulderCardProps {
   boulder: Boulder;
   gym: Gym;
+  onPress?: () => void;
 }
 
-export function BoulderCard({ boulder, gym }: BoulderCardProps) {
+export function BoulderCard({ boulder, gym, onPress }: BoulderCardProps) {
   const { t } = useTranslation();
   const labelHex = gym.labelsHexa?.[String(boulder.label)];
   const holdsKey = String(boulder.holdsColor);
@@ -48,7 +49,7 @@ export function BoulderCard({ boulder, gym }: BoulderCardProps) {
   const holdsTextColor = holdsHex && isLightColor(holdsHex) ? '#111111' : '#ffffff';
 
   return (
-    <View className="mb-8">
+    <Pressable className="mb-8 active:opacity-80" onPress={onPress}>
       {/* Photo */}
       <View className="w-full overflow-hidden rounded-2xl bg-muted" style={{ aspectRatio: 4 / 3 }}>
         {imageUri ? (
@@ -114,6 +115,6 @@ export function BoulderCard({ boulder, gym }: BoulderCardProps) {
           </View>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }

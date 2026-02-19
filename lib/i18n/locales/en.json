@@ -10,6 +10,15 @@
     "boulderCount_other": "{{count}} boulders"
   },
   "boulder": {
-    "betaBadge": "Beta"
+    "betaBadge": "Beta",
+    "sends": "Sends",
+    "flashes": "Flashes",
+    "likes": "Likes",
+    "comments": "Comments",
+    "send": "I sent it!",
+    "flash": "Flash!",
+    "holdsColor": "Holds color",
+    "routeTypes": "Style",
+    "openedAgo": "Open for {{duration}}"
   }
 }

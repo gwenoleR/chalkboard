@@ -29,10 +29,6 @@ import { NAV_THEME } from '@/lib/theme';
 const LIGHT_THEME: Theme = NAV_THEME.light;
 const DARK_THEME: Theme = NAV_THEME.dark;
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 function RootLayout() {
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
@@ -51,7 +47,8 @@ function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DARK_THEME : LIGHT_THEME}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="boulder/[id]" options={{ headerShown: false, animation: 'slide_from_right' }} />
       </Stack>
       <StatusBar style="auto" />
       <PortalHost />
