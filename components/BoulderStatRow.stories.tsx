@@ -56,3 +56,13 @@ export const ZeroValues: Story = {
     ],
   },
 };
+
+export const Tappable: Story = {
+  args: {
+    stats: [
+      { value: 47, label: 'Envois', onPress: () => {} },
+      { value: 12, label: 'Flashs', onPress: () => {} },
+      { value: 8, label: 'Likes', onPress: () => {} },
+    ],
+  },
+};

@@ -20,6 +20,11 @@
     "holdsColor": "Holds color",
     "routeTypes": "Style",
     "routeSetters": "Route setters",
-    "openedAgo": "Open for {{duration}}"
+    "openedAgo": "Open for {{duration}}",
+    "sentsListTitle": "Sends",
+    "flashesListTitle": "Flashes",
+    "likesListTitle": "Likes",
+    "userCount_one": "{{count}} climber",
+    "userCount_other": "{{count}} climbers"
   }
 }

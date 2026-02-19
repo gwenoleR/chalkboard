@@ -4,7 +4,6 @@ import client, { ensureLoggedIn } from '@/lib/ddp/client';
 import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
 
-const SELECTOR = { isClosed: null };
 const SORT = { isClosed: 1, createdAt: -1, boulderNum: -1, label: -1, holdsColor: -1 };
 
 interface UseBoulder {
@@ -39,7 +38,7 @@ export function useBoulder(id: string): UseBoulder {
 
         if (!found) {
           // Deep-link fallback: subscribe to all boulders for wattabloc
-          boulderSub = client.subscribe('_boulders.list', SELECTOR, SORT, 200, null);
+          boulderSub = client.subscribe('_boulders.list', { isClosed: null }, SORT, 200, null);
           await boulderSub.ready();
           found =
             (client.collection('boulders').fetch({}) as Boulder[]).find((b) => b.id === id) ?? null;

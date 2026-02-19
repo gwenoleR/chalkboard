@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,9 +10,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { BoulderStatRow } from '@/components/BoulderStatRow';
 import { FullScreenImage } from '@/components/FullScreenImage';
+import { UserListSheet } from '@/components/UserListSheet';
 import { Text } from '@/components/ui/text';
 import { isLightColor } from '@/lib/color';
 import { useBoulder } from '@/hooks/use-boulder';
@@ -39,6 +41,26 @@ export default function BoulderDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [imageModalVisible, setImageModalVisible] = useState(false);
+
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const [activeStatType, setActiveStatType] = useState<'sents' | 'flashes' | 'likes' | null>(null);
+
+  // Derive userIds and title from boulder + activeStatType.
+  // Storing only the type (not the ids) avoids a timing race where present() mounts the
+  // sheet before React commits the state update, causing stale userIds to be shown.
+  const sheetUserIds =
+    activeStatType === 'sents'
+      ? (boulder?.sentsList ?? [])
+      : activeStatType === 'flashes'
+        ? (boulder?.flashesList ?? [])
+        : activeStatType === 'likes'
+          ? (boulder?.likesList ?? [])
+          : [];
+
+  function openUserList(type: 'sents' | 'flashes' | 'likes') {
+    setActiveStatType(type);
+    sheetRef.current?.present();
+  }
 
   // Shared value tracking scroll position for parallax
   const scrollY = useSharedValue(0);
@@ -86,9 +108,21 @@ export default function BoulderDetailScreen() {
   const heroTextColor = labelHex && isLightColor(labelHex) ? '#111111' : '#ffffff';
 
   const stats = [
-    { value: boulder.sentsCount, label: t('boulder.sends') },
-    { value: boulder.flashesCount, label: t('boulder.flashes') },
-    { value: boulder.likesCount, label: t('boulder.likes') },
+    {
+      value: boulder.sentsCount,
+      label: t('boulder.sends'),
+      onPress: () => openUserList('sents'),
+    },
+    {
+      value: boulder.flashesCount,
+      label: t('boulder.flashes'),
+      onPress: () => openUserList('flashes'),
+    },
+    {
+      value: boulder.likesCount,
+      label: t('boulder.likes'),
+      onPress: () => openUserList('likes'),
+    },
   ];
 
   return (
@@ -287,6 +321,12 @@ export default function BoulderDetailScreen() {
           <Text className="font-outfit-semibold text-base text-white">{t('boulder.send')}</Text>
         </Pressable>
       </View>
+
+      <UserListSheet
+        sheetRef={sheetRef}
+        title={t(`boulder.${activeStatType ?? 'sents'}ListTitle`)}
+        userIds={sheetUserIds}
+      />
     </View>
   );
 }

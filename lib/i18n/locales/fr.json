@@ -20,6 +20,11 @@
     "holdsColor": "Couleur des prises",
     "routeTypes": "Style",
     "routeSetters": "Ouvreurs",
-    "openedAgo": "Ouvert depuis {{duration}}"
+    "openedAgo": "Ouvert depuis {{duration}}",
+    "sentsListTitle": "Enchainements",
+    "flashesListTitle": "Flashs",
+    "likesListTitle": "Likes",
+    "userCount_one": "{{count}} grimpeur",
+    "userCount_other": "{{count}} grimpeurs"
   }
 }

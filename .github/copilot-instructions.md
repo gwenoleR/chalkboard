@@ -282,7 +282,7 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 
 - **Framework**: Expo (SDK latest) + Expo Router (file-based routing) + Expo Web (`react-native-web`)
 - **Language**: TypeScript
-- **UI Components**: `react-native-reusables` (équivalent shadcn pour RN+Web, copy-paste, NativeWind v4)
+- **UI Components**: `react-native-reusables` (équivalent shadcn pour RN+Web, copy-paste, NativeWind v4) - [Docs](https://reactnativereusables.com/docs)
   - Ajouter un composant : `npx @react-native-reusables/cli@latest add <component>`
   - Vérifier la config : `npx @react-native-reusables/cli@latest doctor`
   - Composants copiés dans `components/ui/` et `node_modules/@rnr/`
