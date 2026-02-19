@@ -4,6 +4,9 @@ import { Check, Heart, MessageCircle, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { GymMap } from '@/components/GymMap';
+import { IconBadge } from '@/components/IconBadge';
+import { IconStat } from '@/components/IconStat';
+import { Hold } from '@/lib/icons/hold';
 import { Text } from '@/components/ui/text';
 import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
@@ -59,22 +62,19 @@ export function BoulderCard({ boulder, gym }: BoulderCardProps) {
             <Text className="font-outfit-bold text-5xl text-muted-foreground">{boulder.grade}</Text>
           </View>
         )}
-        {/* Beta badge (top-left) — shown when demo videos exist */}
         {boulder.videosCount > 0 ? (
-          <View className="absolute left-3 top-3 flex-row items-center gap-1 rounded-full bg-black/60 px-3 py-1">
-            <Video size={12} color="#ffffff" strokeWidth={2} />
-            <Text className="text-xs font-semibold text-white">{t('boulder.betaBadge')}</Text>
+          <View className="absolute left-3 top-3">
+            <IconBadge icon={Video} label={t('boulder.betaBadge')} />
           </View>
         ) : null}
-        {/* Holds color badge overlay (top-right) */}
         {holdsHex && holdsName ? (
-          <View
-            className="absolute right-3 top-3 rounded-full px-3 py-1"
-            style={{ backgroundColor: holdsHex }}
-          >
-            <Text className="text-xs font-semibold" style={{ color: holdsTextColor }}>
-              {holdsName}
-            </Text>
+          <View className="absolute right-3 top-3">
+            <IconBadge
+              icon={Hold}
+              label={holdsName}
+              backgroundColor={holdsHex}
+              color={holdsTextColor}
+            />
           </View>
         ) : null}
       </View>
@@ -84,30 +84,12 @@ export function BoulderCard({ boulder, gym }: BoulderCardProps) {
         <View className="flex-1 pr-3">
           <View className="flex-row items-center gap-2">
             {labelHex ? (
-              <View
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: labelHex }}
-              />
+              <View className="h-3 w-3 rounded-full" style={{ backgroundColor: labelHex }} />
             ) : null}
             <Text className="font-outfit-bold text-base">{boulder.grade}</Text>
-            {boulder.sentsCount > 0 ? (
-              <View className="flex-row items-center gap-1 ml-1">
-                <Check size={13} strokeWidth={2.5} color="#6b7280" />
-                <Text className="font-dm-sans text-sm text-muted-foreground">{boulder.sentsCount}</Text>
-              </View>
-            ) : null}
-            {boulder.likesCount > 0 ? (
-              <View className="flex-row items-center gap-1 ml-1">
-                <Heart size={13} strokeWidth={2.5} color="#6b7280" />
-                <Text className="font-dm-sans text-sm text-muted-foreground">{boulder.likesCount}</Text>
-              </View>
-            ) : null}
-            {boulder.commentsCount > 0 ? (
-              <View className="flex-row items-center gap-1 ml-1">
-                <MessageCircle size={13} strokeWidth={2.5} color="#6b7280" />
-                <Text className="font-dm-sans text-sm text-muted-foreground">{boulder.commentsCount}</Text>
-              </View>
-            ) : null}
+            <IconStat icon={Check} value={boulder.sentsCount} />
+            <IconStat icon={Heart} value={boulder.likesCount} />
+            <IconStat icon={MessageCircle} value={boulder.commentsCount} />
           </View>
           {routeTypeNames?.length ? (
             <Text className="font-dm-sans text-sm text-muted-foreground">
