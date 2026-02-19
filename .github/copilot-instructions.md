@@ -1,0 +1,334 @@
+# Social Boulder – Copilot Instructions
+
+> **⚠️ RÈGLE IMPÉRATIVE** : Ce fichier doit être maintenu à jour en permanence.
+> Toute modification de stack, configuration, schema, ou convention **doit être reflétée ici immédiatement**.
+> C'est la source de vérité unique du projet.
+
+## Code conventions
+
+### Fichiers & nommage
+- **Composants** : `PascalCase.tsx` — ex: `BoulderCard.tsx`
+- **Hooks** : `use-kebab-case.ts` — ex: `use-ddp-connection.ts`
+- **Utilitaires / helpers** : `kebab-case.ts` — ex: `format-grade.ts`
+- **Stories** : `ComponentName.stories.tsx` colocalisées avec le composant ou dans `components/design-system/`
+- **Types** : dans `types/` pour les types globaux, colocalisés sinon
+
+### Composants
+- Toujours des **fonctions nommées** (`function BoulderCard()`, pas de `const BoulderCard = () =>`)
+- **Export default** en bas de fichier
+- Props typées avec une `interface` nommée : `interface BoulderCardProps { ... }`
+- Pas de `StyleSheet.create` — on utilise uniquement **NativeWind** (`className`)
+- Pour les styles conditionnels : utiliser `cn()` depuis `@/lib/utils`
+
+### TypeScript
+- **Strict mode** activé — pas de `any`, pas de `!` non-null assertion sauf cas exceptionnel commenté
+- Préférer `type` pour les unions/intersections, `interface` pour les formes d'objets
+- Toujours typer les retours des fonctions utilitaires
+
+### Styling
+- Classes **NativeWind** en priorité (`className="..."`)
+- Ordre des classes Tailwind géré automatiquement par **prettier-plugin-tailwindcss**
+- Utiliser les tokens sémantiques (`bg-background`, `text-foreground`, `border-border`) plutôt que les couleurs brutes quand c'est du UI générique
+- Utiliser les couleurs brutes (`bg-primary-500`) pour les éléments spécifiques à la charte
+
+### DDP / données
+- Toute la logique DDP dans `lib/ddp/` (hooks + client)
+- Jamais d'appel DDP direct dans les composants — passer par des hooks (`use-boulders.ts`, etc.)
+- Les credentials viennent exclusivement de `process.env.EXPO_PUBLIC_*`
+
+### Langue
+- Tout est en **anglais** : code, commentaires, noms de variables, messages d'erreur, doc
+- Les textes affichés à l'utilisateur passent **toujours** par i18n (voir section i18n)
+
+### Commentaires
+- Commenter le **pourquoi**, jamais le **quoi** — le code dit ce qu'il fait, le commentaire explique pourquoi
+- Toujours en **anglais**
+- `// TODO:` pour les choses à faire, `// FIXME:` pour les bugs connus, `// HACK:` pour les contournements — toujours avec une explication
+- **JSDoc** pour les hooks et fonctions utilitaires publics :
+  ```ts
+  /**
+   * Returns the human-readable color name for a boulder label.
+   * Label 0 means the boulder has no color assigned yet.
+   */
+  function getLabelColor(label: number, gym: Gym): string { ... }
+  ```
+- Pas de commentaires évidents (`// increment counter`, `// return value`) — les supprimer
+
+### Structure des dossiers
+- `app/` — routes Expo Router uniquement, pas de logique métier
+- `components/` — composants réutilisables, un fichier par composant
+- `components/ui/` — composants RNR (copiés via CLI, ne pas modifier manuellement)
+- `components/design-system/` — stories et composants de charte
+- `lib/` — logique partagée (DDP, utils, theme)
+- `types/` — types globaux partagés entre plusieurs fichiers
+- `hooks/` — hooks React custom
+
+### Git
+- Commits en **anglais**, préfixés d'un **gitmoji** (https://gitmoji.dev)
+  - ex: `✨ Add boulder list screen`, `🐛 Fix DDP reconnection on background`, `♻️ Refactor grade formatting`
+- Pas de commit de fichiers générés (`.expo/`, `storybook.requires.ts`)
+
+
+
+Build a custom UI for **Social Boulder** (`sboulder.com`) by connecting directly to their backend via the **DDP protocol** (Meteor.js). There is no REST API — all communication uses WebSocket DDP.
+
+## DDP connection
+
+- **WebSocket URL**: `wss://www.sboulder.com/sockjs/websocket`
+- **Required header**: `Origin: https://www.sboulder.com`
+- **Auth**: token dans `.env` → `EXPO_PUBLIC_DDP_TOKEN` / `EXPO_PUBLIC_DDP_USER_ID` (ne jamais committer `.env`)
+
+```js
+// Connection sequence
+send({ msg: 'connect', version: '1', support: ['1'] });
+// On 'connected':
+send({ msg: 'method', method: 'login', params: [{ resume: TOKEN }], id: '1' });
+```
+
+## DDP subscriptions
+
+| Name                  | Params                            | Collections populated                |
+| --------------------- | --------------------------------- | ------------------------------------ |
+| `_boulders.list`      | `[selector, sort, limit, cursor]` | `boulders`                           |
+| `_boulders.count`     | `[selector]`                      | `counters-collection`                |
+| `access-points`       | `gymId: String`                   | `access_control` only (NOT boulders) |
+| `_gyms.info`          | `gymId: String`                   | `gyms`                               |
+| `_gyms.list`          | `selector: Object`                | `gyms`                               |
+| `users.single`        | `userId: String`                  | `users`                              |
+| `users.notifications` | `limit: Number`                   | `notifications`                      |
+
+### Fetching boulders
+
+```js
+// Active boulders — isClosed MUST be null (not false) to get open boulders
+send({
+  msg: 'sub',
+  id: '1',
+  name: '_boulders.list',
+  params: [
+    { gym: 'wattabloc', isClosed: null },
+    { isClosed: 1, createdAt: -1, boulderNum: -1, label: -1, holdsColor: -1 },
+    200, // limit — 200 returns all 127 wattabloc boulders in one shot
+    null, // cursor (_id of last boulder for pagination, null = start)
+  ],
+});
+
+// Count
+send({
+  msg: 'sub',
+  id: '2',
+  name: '_boulders.count',
+  params: [{ gym: 'wattabloc', isClosed: null }],
+});
+// → collection "counters-collection": { count: 127 }
+```
+
+See `exploration/ddp-fetch-boulders.js` for a ready-to-run script.
+
+## Gym IDs
+
+Known gyms for the current user: `wattabloc`, `wattabloc/pans`, `wattabloc/spraywall`, `wattabloc/pan`, `isatix`, `auperchoir`, `arkose`, `arkose/massy`, `sb`
+
+## DDP methods
+
+```js
+// Log a send (normal)
+send({
+  msg: 'method',
+  method: '_boulders.send',
+  params: [boulderId, false, userId, false, false, false, null],
+  id: '1',
+});
+
+// Log a flash (first try)
+send({
+  msg: 'method',
+  method: '_boulders.send',
+  params: [boulderId, true, userId, false, false, false, null],
+  id: '1',
+});
+```
+
+Signature: `(boulderId: String, isFlash: Boolean, userId: String, isCoach: Boolean, isStandalone: Boolean, isZone: Boolean, videoContestId: String|null)`
+
+Other methods: `_boulders.dislike(boulderId)`, `_users.markAllNotificationsAsRead()`, `_generateCSVData(gymId, '')`
+
+## Collections schema
+
+### `boulders`
+
+Key fields (confirmed live on wattabloc, 127 boulders):
+
+| Field                                     | Type                  | Notes                                                                 |
+| ----------------------------------------- | --------------------- | --------------------------------------------------------------------- |
+| `gym`                                     | `String`              | e.g. `"wattabloc"`                                                    |
+| `label`                                   | `Number`              | 1–8, maps to color via `gyms.labels`                                  |
+| `grade`                                   | `String`              | e.g. `"6B+"`                                                          |
+| `holdsColor`                              | `Number`              | integer → name via `gyms.holdsColors`, hex via `gyms.holdsColorsHexa` |
+| `routeTypes`                              | `Number[]`            | integers → names via `gyms.routeTypes` map                            |
+| `routeSetter`                             | `String[]`            | array of names                                                        |
+| `zone`                                    | `Number`              | → name via `gyms.zones`                                               |
+| `picture`                                 | `Object`              | `{ id, zoom, highlighted, share, ratio, width, crop }`                |
+| `boulderNum`                              | `Number`              | displayed number in gym                                               |
+| `isClosed`                                | `null \| true`        | **null** = open (not `false`!)                                        |
+| `sentsList` / `sentsCount`                | `userId[]` / `Number` |                                                                       |
+| `flashesList` / `flashesCount`            | `userId[]` / `Number` |                                                                       |
+| `likesList` / `likesCount` / `likesRatio` |                       |                                                                       |
+| `projectsList` / `followers`              | `userId[]`            |                                                                       |
+
+### Images (S3)
+
+Base: `https://socialboulder.s3-eu-west-1.amazonaws.com`
+
+```js
+const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
+`${S3}/bouldersPics/${picture.id}.jpg` // original
+`${S3}/400/bouldersPics/${picture.id}.jpg` // 400px wide
+`${S3}/800/bouldersPics/${picture.id}.jpg` // 800px wide
+`${S3}/bouldersZooms/${picture.zoom}.jpg` // zoomed crop
+`${S3}/boulderPicsShare/${picture.share}.jpg`; // 1200px share
+```
+
+### `gyms` (wattabloc mappings)
+
+`holdsColors`: `{1:"roses", 2:"noires", 3:"oranges", 4:"vertes", 5:"violettes", 6:"blanches", 7:"rouges", 8:"bleues", 9:"jaunes", 10:"mint"}`
+
+`labels`: `{1:"jaune", 2:"vert", 3:"bleu", 4:"rouge", 5:"violet", 6:"noir", 7:"blanc", 8:"rose"}`
+
+`zones`: `{1:"Bout du Monde", 2:"Extension", 3:"Grande Dalle", 4:"Petit toit", 5:"Proue", 6:"Dévers", 7:"Fronton", 8:"Petite Dalle", 9:"Réta", 100:"Spraywall", 101:"Pan"}`
+
+`routeTypes`: integers 1–21 → `{1:"Technique", 2:"Équilibre", 3:"Souplesse", 4:"Physique", 5:"Gainage", 6:"Compression", 7:"À doigts", 8:"Pose de pieds", 9:"Complexe", 10:"Basique", 11:"Dynamique", 12:"Coordination", 13:"Jeté", 14:"Run & Jump", 15:"Petits gabarits", 16:"Grands gabarits", 17:"Traversée", 18:"Long", 19:"Volumes", 20:"Plats", 21:"No Foot"}`
+
+### `users`
+
+```js
+{
+  _id: String,
+  profile: {
+    name: String,
+    scores: {
+      [gymSlug]: {
+        points: { [label]: Number },
+        counts: { [label]: Number },  // nb blocs envoyés par label
+        bestGrades: Object,
+        sessionsCount: Number,
+        lastSend: Date,
+      }
+    }
+  },
+  emails: [{ address: String, verified: Boolean }],
+  gyms: [gymSlug],        // toutes les salles visitées
+  favoriteGyms: [gymSlug],
+  lastGym: String,
+  notificationsCount: Number,
+  friendship: { friends: [userId], requesting: [userId], requestedBy: [userId] }
+}
+```
+
+### `notifications`
+
+```js
+{
+  _id: String,
+  type: String,           // ex: "boulders.newBoulder"
+  receiverId: String,
+  senderId: String,
+  senderProfile: Object,
+  boulderId: String,
+  gym: String,
+  createdAt: Date,
+  _isNew: Boolean,
+}
+```
+
+## Exploration scripts
+
+`exploration/` contains Node.js scripts using the `ws` package. **Do not modify them** — use as reference.
+
+| Script                  | Purpose                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| `ddp-fetch-boulders.js` | Fetch all active boulders from a gym. Usage: `node exploration/ddp-fetch-boulders.js [gymId] [limit]` |
+
+## i18n
+
+- **Stack** : `i18next` + `react-i18next` + `expo-localization`
+- **Langue par défaut** : français (`fallbackLng: 'fr'`), détection automatique via `expo-localization`
+- **Fichiers de traduction** : `lib/i18n/locales/fr.json` et `en.json`
+- **Usage dans les composants** :
+  ```tsx
+  import { useTranslation } from 'react-i18next';
+
+  function MyComponent() {
+    const { t } = useTranslation();
+    return <Text>{t('common.loading')}</Text>;
+  }
+  ```
+- Toutes les clés de traduction sont en **anglais**
+- **Jamais** de chaîne UI en dur dans les composants — toujours `t('...')`
+
+## Stack
+
+- **Framework**: Expo (SDK latest) + Expo Router (file-based routing) + Expo Web (`react-native-web`)
+- **Language**: TypeScript
+- **UI Components**: `react-native-reusables` (équivalent shadcn pour RN+Web, copy-paste, NativeWind v4)
+  - Ajouter un composant : `npx @react-native-reusables/cli@latest add <component>`
+  - Vérifier la config : `npx @react-native-reusables/cli@latest doctor`
+  - Composants copiés dans `components/ui/` et `node_modules/@rnr/`
+- **Styling**: NativeWind v4 (Tailwind CSS pour React Native/Web) — classes `className` disponibles sur tous les composants
+  - Couleur `primary`: French Rose `#e35f8d` — aussi accessible via `hsl(var(--primary))`
+  - Couleur `secondary`: Teal `#2aab7e` — aussi accessible via `hsl(var(--secondary))`
+  - Tokens sémantiques RNR : `background`, `foreground`, `card`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `popover`
+  - Border radius : `rounded-lg` = `var(--radius)` = `0.5rem`
+  - Dark mode : classe `dark` sur le root (`darkMode: 'class'`)
+  - Fichiers clés : `global.css` (CSS vars), `tailwind.config.js`, `lib/theme.ts` (THEME + NAV_THEME), `lib/utils.ts` (cn helper)
+  - Fonts: **Outfit** (headings) + **DM Sans** (body/UI) — `className="font-outfit-bold"`, `"font-dm-sans"`, etc.
+- **Storybook**: `@storybook/react-native` v10, lancé avec `npm run storybook`
+  - Stories dans `components/**/*.stories.tsx`
+  - Design system stories: `components/design-system/ColorPalette.stories.tsx`, `Typography.stories.tsx`
+- **DDP client**: `simpleddp` — Promise-based, reactive, works with the native browser/RN `WebSocket` global
+- **Scripts**: `npm run start/ios/android/web`, `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run storybook`
+
+## Project structure
+
+```
+app/
+  _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, i18n init)
+  (tabs)/
+    _layout.tsx        ← tab navigation
+    index.tsx          ← écran principal
+components/
+  design-system/       ← stories Storybook (ColorPalette, Typography)
+  ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
+lib/
+  i18n/
+    index.ts           ← config i18next (langue device, fallback fr)
+    locales/
+      fr.json          ← traductions françaises
+      en.json          ← traductions anglaises
+  theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
+  utils.ts             ← cn() helper (clsx + tailwind-merge)
+hooks/
+  use-color-scheme.ts  ← hook color scheme (web-safe)
+exploration/
+  ddp-fetch-boulders.js ← script Node.js de référence DDP (ne pas modifier)
+.rnstorybook/
+  preview.tsx          ← décorateurs Storybook (fonts, fond blanc)
+  main.ts              ← config Storybook
+.env                   ← credentials DDP (gitignored)
+.env.example           ← template à committer
+global.css             ← CSS variables (--primary, --secondary, --radius…)
+tailwind.config.js     ← couleurs + fonts + borderRadius + plugins
+```
+
+```ts
+import SimpleDDP from 'simpleddp';
+
+const ddp = new SimpleDDP({
+  endpoint: 'wss://www.sboulder.com/sockjs/websocket',
+  SocketConstructor: WebSocket, // native in browser (Expo Web) and React Native
+  reconnectInterval: 5000,
+});
+```
+
+- **CORS**: server declares `"origins": ["*:*"]` — no restriction on the Origin header
+- **Auth token**: valid until 2126, stored in `.env` (gitignored)

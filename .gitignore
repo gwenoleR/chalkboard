@@ -32,6 +32,11 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+
+# sensitive — credentials locaux, ne jamais committer
+localStorage.md
+cookies.md
 
 # typescript
 *.tsbuildinfo

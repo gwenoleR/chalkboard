@@ -1,50 +1,118 @@
-# Welcome to your Expo app 👋
+# 🧗 Chalkboard
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track your climbing sessions, explore gym boulders, and follow your progress.
 
-## Get started
+> Built with ❤️ by climbers, for climbers. Connects directly to the Social Boulder backend via the DDP (Meteor.js WebSocket) protocol.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
 
-2. Start the app
+- 🗺️ Browse boulders by gym, grade, and color
+- ✅ Log sends and flashes
+- 📊 Track your progress and stats over time
+- 🌍 Multi-language support (French & English)
+- 🌙 Light & dark mode
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Tech stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Layer | Technology |
+|---|---|
+| Framework | [Expo](https://expo.dev) + [Expo Router](https://expo.github.io/router) |
+| Styling | [NativeWind v4](https://www.nativewind.dev) (Tailwind CSS) |
+| UI components | [react-native-reusables](https://reactnativereusables.com) |
+| Backend | DDP over WebSocket ([simpleddp](https://github.com/Gregivy/simpleddp)) |
+| i18n | [i18next](https://www.i18next.com) + [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/) |
+| Design system | French Rose `#e35f8d` × Teal `#2aab7e` · Outfit + DM Sans |
+| Storybook | [@storybook/react-native](https://storybook.js.org/docs/react-native) |
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🚀 Getting started
 
-When you're ready, run:
+### Prerequisites
+
+- Node.js 18+
+- [Expo Go](https://expo.dev/go) on your device, or an iOS/Android simulator
+
+### Install
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Configure
 
-## Learn more
+Copy `.env.example` to `.env` and fill in your credentials:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+cp .env.example .env
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Run
 
-## Join the community
+```bash
+# iOS
+npm run ios
 
-Join our community of developers creating universal apps.
+# Android
+npm run android
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Web
+npm run web
+```
+
+---
+
+## 🎨 Storybook
+
+Explore the design system components interactively:
+
+```bash
+npm run storybook
+```
+
+---
+
+## 🧹 Code quality
+
+```bash
+# Lint
+npm run lint
+
+# Auto-fix lint issues
+npm run lint:fix
+
+# Format with Prettier
+npm run format
+
+# Check formatting
+npm run format:check
+```
+
+---
+
+## 📁 Project structure
+
+```
+app/                  ← Expo Router screens
+components/
+  design-system/      ← Storybook stories
+  ui/                 ← react-native-reusables components
+lib/
+  i18n/               ← Translations (fr, en)
+  theme.ts            ← Design tokens
+  utils.ts            ← cn() helper
+hooks/                ← Custom React hooks
+exploration/          ← DDP reference scripts (Node.js)
+```
+
+---
+
+## 📄 License
+
+[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)
+
+You are free to use, share, and adapt this project for **non-commercial purposes**, as long as you give appropriate credit. Commercial use is not permitted.
