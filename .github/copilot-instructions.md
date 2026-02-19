@@ -16,6 +16,9 @@
 
 ### Composants
 
+- Tout élément graphique un peu complexe doit être extrait dans son propre composant
+- **Tout composant doit être accompagné de sa story Storybook** (`ComponentName.stories.tsx` colocalisée)
+- Si un composant est modifié, sa story doit être mise à jour en conséquence
 - Toujours des **fonctions nommées** (`function BoulderCard()`, pas de `const BoulderCard = () =>`)
 - **Export default** en bas de fichier
 - Props typées avec une `interface` nommée : `interface BoulderCardProps { ... }`

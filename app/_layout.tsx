@@ -1,5 +1,6 @@
 import '../global.css';
 import '../lib/i18n';
+import '../lib/suppress-lib-warnings';
 
 import { ThemeProvider, type Theme } from '@react-navigation/native';
 import { Stack } from 'expo-router';
@@ -51,7 +52,6 @@ function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DARK_THEME : LIGHT_THEME}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
       <PortalHost />

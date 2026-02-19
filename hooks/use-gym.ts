@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { ensureLoggedIn } from '@/lib/ddp/client';
-import client from '@/lib/ddp/client';
+import client, { ensureLoggedIn } from '@/lib/ddp/client';
 import type { Gym } from '@/types/gym';
 
 /**
