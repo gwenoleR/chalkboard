@@ -7,6 +7,7 @@
 ## Code conventions
 
 ### Fichiers & nommage
+
 - **Composants** : `PascalCase.tsx` — ex: `BoulderCard.tsx`
 - **Hooks** : `use-kebab-case.ts` — ex: `use-ddp-connection.ts`
 - **Utilitaires / helpers** : `kebab-case.ts` — ex: `format-grade.ts`
@@ -14,6 +15,7 @@
 - **Types** : dans `types/` pour les types globaux, colocalisés sinon
 
 ### Composants
+
 - Toujours des **fonctions nommées** (`function BoulderCard()`, pas de `const BoulderCard = () =>`)
 - **Export default** en bas de fichier
 - Props typées avec une `interface` nommée : `interface BoulderCardProps { ... }`
@@ -21,26 +23,31 @@
 - Pour les styles conditionnels : utiliser `cn()` depuis `@/lib/utils`
 
 ### TypeScript
+
 - **Strict mode** activé — pas de `any`, pas de `!` non-null assertion sauf cas exceptionnel commenté
 - Préférer `type` pour les unions/intersections, `interface` pour les formes d'objets
 - Toujours typer les retours des fonctions utilitaires
 
 ### Styling
+
 - Classes **NativeWind** en priorité (`className="..."`)
 - Ordre des classes Tailwind géré automatiquement par **prettier-plugin-tailwindcss**
 - Utiliser les tokens sémantiques (`bg-background`, `text-foreground`, `border-border`) plutôt que les couleurs brutes quand c'est du UI générique
 - Utiliser les couleurs brutes (`bg-primary-500`) pour les éléments spécifiques à la charte
 
 ### DDP / données
+
 - Toute la logique DDP dans `lib/ddp/` (hooks + client)
 - Jamais d'appel DDP direct dans les composants — passer par des hooks (`use-boulders.ts`, etc.)
 - Les credentials viennent exclusivement de `process.env.EXPO_PUBLIC_*`
 
 ### Langue
+
 - Tout est en **anglais** : code, commentaires, noms de variables, messages d'erreur, doc
 - Les textes affichés à l'utilisateur passent **toujours** par i18n (voir section i18n)
 
 ### Commentaires
+
 - Commenter le **pourquoi**, jamais le **quoi** — le code dit ce qu'il fait, le commentaire explique pourquoi
 - Toujours en **anglais**
 - `// TODO:` pour les choses à faire, `// FIXME:` pour les bugs connus, `// HACK:` pour les contournements — toujours avec une explication
@@ -55,6 +62,7 @@
 - Pas de commentaires évidents (`// increment counter`, `// return value`) — les supprimer
 
 ### Structure des dossiers
+
 - `app/` — routes Expo Router uniquement, pas de logique métier
 - `components/` — composants réutilisables, un fichier par composant
 - `components/ui/` — composants RNR (copiés via CLI, ne pas modifier manuellement)
@@ -64,11 +72,10 @@
 - `hooks/` — hooks React custom
 
 ### Git
+
 - Commits en **anglais**, préfixés d'un **gitmoji** (https://gitmoji.dev)
   - ex: `✨ Add boulder list screen`, `🐛 Fix DDP reconnection on background`, `♻️ Refactor grade formatting`
 - Pas de commit de fichiers générés (`.expo/`, `storybook.requires.ts`)
-
-
 
 Build a custom UI for **Social Boulder** (`sboulder.com`) by connecting directly to their backend via the **DDP protocol** (Meteor.js). There is no REST API — all communication uses WebSocket DDP.
 
@@ -255,6 +262,7 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 - **Langue par défaut** : français (`fallbackLng: 'fr'`), détection automatique via `expo-localization`
 - **Fichiers de traduction** : `lib/i18n/locales/fr.json` et `en.json`
 - **Usage dans les composants** :
+
   ```tsx
   import { useTranslation } from 'react-i18next';
 
@@ -263,6 +271,7 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
     return <Text>{t('common.loading')}</Text>;
   }
   ```
+
 - Toutes les clés de traduction sont en **anglais**
 - **Jamais** de chaîne UI en dur dans les composants — toujours `t('...')`
 
@@ -286,6 +295,9 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
   - Stories dans `components/**/*.stories.tsx`
   - Design system stories: `components/design-system/ColorPalette.stories.tsx`, `Typography.stories.tsx`
 - **DDP client**: `simpleddp` — Promise-based, reactive, works with the native browser/RN `WebSocket` global
+  - Singleton dans `lib/ddp/client.ts`, partagé par tous les hooks
+  - Login centralisé via `ensureLoggedIn()` — appelé une seule fois même si plusieurs hooks démarrent en parallèle
+  - Pattern dans les hooks : `await ensureLoggedIn()` → `client.subscribe(...)` → `await sub.ready()` → `client.collection(...).fetch()`
 - **Scripts**: `npm run start/ios/android/web`, `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run storybook`
 
 ## Project structure
@@ -295,11 +307,14 @@ app/
   _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, i18n init)
   (tabs)/
     _layout.tsx        ← tab navigation
-    index.tsx          ← écran principal
+    index.tsx          ← liste des blocs (wattabloc)
 components/
+  BoulderCard.tsx      ← carte d'un bloc (grade, couleur label, holds color, sends)
   design-system/       ← stories Storybook (ColorPalette, Typography)
   ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
 lib/
+  ddp/
+    client.ts          ← singleton simpleddp + ensureLoggedIn() (login unique partagé)
   i18n/
     index.ts           ← config i18next (langue device, fallback fr)
     locales/
@@ -308,7 +323,12 @@ lib/
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge)
 hooks/
+  use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
+  use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
+types/
+  boulder.ts           ← type Boulder
+  gym.ts               ← type Gym
 exploration/
   ddp-fetch-boulders.js ← script Node.js de référence DDP (ne pas modifier)
 .rnstorybook/

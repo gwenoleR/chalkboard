@@ -18,15 +18,15 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 
 ## 🛠️ Tech stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Expo](https://expo.dev) + [Expo Router](https://expo.github.io/router) |
-| Styling | [NativeWind v4](https://www.nativewind.dev) (Tailwind CSS) |
-| UI components | [react-native-reusables](https://reactnativereusables.com) |
-| Backend | DDP over WebSocket ([simpleddp](https://github.com/Gregivy/simpleddp)) |
-| i18n | [i18next](https://www.i18next.com) + [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/) |
-| Design system | French Rose `#e35f8d` × Teal `#2aab7e` · Outfit + DM Sans |
-| Storybook | [@storybook/react-native](https://storybook.js.org/docs/react-native) |
+| Layer         | Technology                                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Framework     | [Expo](https://expo.dev) + [Expo Router](https://expo.github.io/router)                                           |
+| Styling       | [NativeWind v4](https://www.nativewind.dev) (Tailwind CSS)                                                        |
+| UI components | [react-native-reusables](https://reactnativereusables.com)                                                        |
+| Backend       | DDP over WebSocket ([simpleddp](https://github.com/Gregivy/simpleddp))                                            |
+| i18n          | [i18next](https://www.i18next.com) + [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/) |
+| Design system | French Rose `#e35f8d` × Teal `#2aab7e` · Outfit + DM Sans                                                         |
+| Storybook     | [@storybook/react-native](https://storybook.js.org/docs/react-native)                                             |
 
 ---
 
