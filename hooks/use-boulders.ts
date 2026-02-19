@@ -36,12 +36,24 @@ export function useBoulders(): UseBoulders {
         subCount = client.subscribe('_boulders.count', SELECTOR);
         subList = client.subscribe('_boulders.list', SELECTOR, SORT, LIMIT, null);
 
+        // Fast path: collection data survives fast-refresh (client is on global).
+        // Render immediately with cached data while subscriptions re-establish.
+        const cached = client.collection('boulders').fetch({}) as Boulder[];
+        if (cached.length > 0) {
+          setBoulders(cached);
+          const cachedCounters = client.collection('counters-collection').fetch({}) as {
+            count: number;
+          }[];
+          if (cachedCounters.length > 0) setCount(cachedCounters[0].count);
+          setLoading(false);
+        }
+
         await Promise.all([subCount.ready(), subList.ready()]);
 
-        const raw = client.collection('boulders').fetch() as Boulder[];
+        const raw = client.collection('boulders').fetch({}) as Boulder[];
         setBoulders(raw);
 
-        const counters = client.collection('counters-collection').fetch() as { count: number }[];
+        const counters = client.collection('counters-collection').fetch({}) as { count: number }[];
         if (counters.length > 0) setCount(counters[0].count);
 
         setLoading(false);

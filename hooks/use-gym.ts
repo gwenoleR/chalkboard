@@ -21,7 +21,7 @@ export function useGym(gymId: string): { gym: Gym | null; loading: boolean } {
         sub = client.subscribe('_gyms.info', gymId);
         await sub.ready();
 
-        const gyms = client.collection('gyms').fetch() as Gym[];
+        const gyms = client.collection('gyms').fetch({}) as Gym[];
         const found = gyms.find((g) => g.slug === gymId) ?? null;
         setGym(found);
         setLoading(false);
@@ -31,7 +31,7 @@ export function useGym(gymId: string): { gym: Gym | null; loading: boolean } {
     }
 
     start();
-    return () => sub?.stop();
+    return () => { sub?.stop(); };
   }, [gymId]);
 
   return { gym, loading };

@@ -35,14 +35,14 @@ export function useBoulder(id: string): UseBoulder {
 
         // Fast path: boulder already in collection from the list screen
         let found =
-          (client.collection('boulders').fetch() as Boulder[]).find((b) => b.id === id) ?? null;
+          (client.collection('boulders').fetch({}) as Boulder[]).find((b) => b.id === id) ?? null;
 
         if (!found) {
           // Deep-link fallback: subscribe to all boulders for wattabloc
           boulderSub = client.subscribe('_boulders.list', SELECTOR, SORT, 200, null);
           await boulderSub.ready();
           found =
-            (client.collection('boulders').fetch() as Boulder[]).find((b) => b.id === id) ?? null;
+            (client.collection('boulders').fetch({}) as Boulder[]).find((b) => b.id === id) ?? null;
         }
 
         if (!found) {
@@ -51,14 +51,20 @@ export function useBoulder(id: string): UseBoulder {
         }
         setBoulder(found);
 
-        // Resolve gym data
+        // Fast path: gym may already be cached
         let foundGym =
-          (client.collection('gyms').fetch() as Gym[]).find((g) => g.slug === found!.gym) ?? null;
+          (client.collection('gyms').fetch({}) as Gym[]).find((g) => g.slug === found!.gym) ?? null;
+        if (foundGym) {
+          setGym(foundGym);
+          setLoading(false);
+        }
+
         if (!foundGym) {
           gymSub = client.subscribe('_gyms.info', found.gym);
           await gymSub.ready();
           foundGym =
-            (client.collection('gyms').fetch() as Gym[]).find((g) => g.slug === found!.gym) ?? null;
+            (client.collection('gyms').fetch({}) as Gym[]).find((g) => g.slug === found!.gym) ??
+            null;
         }
         setGym(foundGym);
       } catch (e: unknown) {
