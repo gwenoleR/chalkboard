@@ -1,4 +1,15 @@
 {
+  "profile": {
+    "title": "Profil",
+    "logout": "Se déconnecter",
+    "favoriteGyms": "Salles favorites",
+    "noActivity": "Aucune activité enregistrée",
+    "lastSend": "Dernier envoi",
+    "sends": "Blocs enchaînés",
+    "bestGrade": "Meilleure cotation",
+    "loginCta": "Connecte-toi pour voir ton profil",
+    "guest": "Invité"
+  },
   "auth": {
     "title": "Connexion",
     "email": "Email",

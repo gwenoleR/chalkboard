@@ -59,6 +59,7 @@ function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="boulder/[id]" options={{ headerShown: false, animation: 'slide_from_right' }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack>
           {needsLogin && <Redirect href="/login" />}
           <StatusBar style="auto" />

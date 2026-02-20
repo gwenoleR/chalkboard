@@ -1,20 +1,25 @@
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
+import { Avatar } from '@/components/Avatar';
 import { BoulderCard } from '@/components/BoulderCard';
 import { GymMap } from '@/components/GymMap';
 import { useBoulders } from '@/hooks/use-boulders';
 import { useGym } from '@/hooks/use-gym';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { useAuth } from '@/lib/auth/auth-context';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { userId } = useAuth();
+  const { user } = useCurrentUser();
   const { boulders, count, loading: bouldersLoading, error, refresh } = useBoulders();
   const { gym, loading: gymLoading } = useGym('wattabloc');
   const [activeZone, setActiveZone] = useState<string | null>(null);
@@ -63,7 +68,17 @@ export default function HomeScreen() {
         )}
         ListHeaderComponent={
           <View>
-            <Text className="pb-4 pt-4 font-outfit-bold text-2xl">{title}</Text>
+            {/* Top bar: title + avatar */}
+            <View className="flex-row items-center justify-between pb-4 pt-4">
+              <Text className="font-outfit-bold text-2xl">{title}</Text>
+              <Pressable onPress={() => router.push('/profile')} className="active:opacity-70">
+                <Avatar
+                  name={user?.profile.name ?? '?'}
+                  avatarUrl={user?.profile.avatars?.url}
+                  size={36}
+                />
+              </Pressable>
+            </View>
             {gym.map ? (
               <View className="mb-6 items-center rounded-xl border border-border bg-card p-4">
                 <GymMap

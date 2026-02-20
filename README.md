@@ -20,6 +20,7 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 - 🟢 Cards show your personal status (sent ✓, flashed ⚡, liked ♥) at a glance
 - 📊 Stats update instantly on action (optimistic updates)
 - 🌍 Multi-language support (French & English)
+- 👤 Profile page — avatar, stats per gym (total sends incl. dismounted boulders, best grade, last send date)
 - 🌙 Light & dark mode
 
 ---
@@ -109,7 +110,10 @@ npm run format:check
 ```
 app/                  ← Expo Router screens
   login.tsx           ← Login screen (email/password + guest mode)
+  profile.tsx         ← Profile screen (avatar, gym stats, logout)
 components/
+  Avatar.tsx          ← Circular avatar with initials fallback
+  GymStatsCard.tsx    ← Gym stats card (sends incl. dismounted, best grade, last send)
   design-system/      ← Storybook stories
   ui/                 ← react-native-reusables components
 lib/
@@ -118,6 +122,8 @@ lib/
   theme.ts            ← Design tokens
   utils.ts            ← cn() helper
 hooks/                ← Custom React hooks
+  use-current-user.ts ← Subscribe users.single → current user profile
+  use-user-sends-count.ts ← _boulders.count for a user (incl. closed boulders)
 exploration/          ← DDP reference scripts (Node.js)
 ```
 

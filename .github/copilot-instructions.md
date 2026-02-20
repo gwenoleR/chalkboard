@@ -429,6 +429,8 @@ const MUX_STREAM = 'https://stream.mux.com';
 app/
   _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, GestureHandlerRootView, BottomSheetModalProvider, i18n init)
   index.tsx            ← liste des blocs (wattabloc) — useFocusEffect → refresh() au retour du détail
+  login.tsx            ← écran de connexion (email/password + mode invité)
+  profile.tsx          ← profil utilisateur (avatar, stats par salle incl. blocs démontés, déconnexion)
   boulder/
     [id].tsx           ← détail d'un bloc — actions send/flash/like (optimistic updates + deltas de compteurs), like flottant top-right
 components/
@@ -442,8 +444,10 @@ components/
   GymMap.stories.tsx   ← Storybook stories
   HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
   HoldsColorBadge.stories.tsx ← Storybook stories
-  UserAvatar.tsx       ← avatar circulaire avec initiales en fallback
-  UserAvatar.stories.tsx ← Storybook stories
+  Avatar.tsx           ← avatar circulaire avec initiales en fallback
+  Avatar.stories.tsx   ← Storybook stories
+  GymStatsCard.tsx     ← stats gym (sends incl. blocs démontés, meilleure cote, dernier envoi)
+  GymStatsCard.stories.tsx ← Storybook stories
   VideoPlayerModal.tsx     ← full-screen Mux HLS player (native: expo-video)
   VideoPlayerModal.web.tsx ← web-specific override using hls.js + raw <video> element
   VideoPlayerModal.stories.tsx ← Storybook stories
@@ -476,15 +480,18 @@ hooks/
   use-boulder-comments.ts ← subscribe _boulders.comments + _videos.details → { comments, loading, error } (text + Mux video with resolved playbackId)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
+  use-current-user.ts  ← subscribe users.single → { user, loading } (profil complet de l'utilisateur connecté)
+  use-user-sends-count.ts ← _boulders.count pour un user (incl. blocs démontés) → { count, loading }
 types/
   boulder.ts           ← DdpDate, ddpDateToDate(), Boulder, BoulderComment, BoulderCommentUserProfile
   gym.ts               ← type Gym
-  user.ts              ← type User (id, profile.name)
+  user.ts              ← User, UserProfile, UserGymScores, UserAvatars (profil complet avec scores par salle)
 exploration/
   ddp-fetch-boulders.js        ← fetch all active boulders from a gym
   ddp-test-user-subs.js        ← test users.single subscriptions (confirmed working server-side)
   ddp-explore-boulder-detail.js ← probe available subs for a boulder
   ddp-explore-comments.js      ← dump comments collection schema
+  ddp-explore-profile.js       ← explore users.single + _boulders.count for profile page
 .rnstorybook/
   preview.tsx          ← décorateurs Storybook (fonts, fond blanc)
   main.ts              ← config Storybook

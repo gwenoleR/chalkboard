@@ -1,4 +1,15 @@
 {
+  "profile": {
+    "title": "Profile",
+    "logout": "Sign out",
+    "favoriteGyms": "Favourite gyms",
+    "noActivity": "No activity recorded",
+    "lastSend": "Last send",
+    "sends": "Sends",
+    "bestGrade": "Best grade",
+    "loginCta": "Sign in to see your profile",
+    "guest": "Guest"
+  },
   "auth": {
     "title": "Sign in",
     "email": "Email",
