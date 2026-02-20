@@ -80,6 +80,14 @@
   - ex: `✨ Add boulder list screen`, `🐛 Fix DDP reconnection on background`, `♻️ Refactor grade formatting`
 - Pas de commit de fichiers générés (`.expo/`, `storybook.requires.ts`)
 
+### NativeWind + @gorhom/portal
+
+`@gorhom/bottom-sheet` (et d'autres libs utilisant `@gorhom/portal`) créent un arbre React séparé, ce qui casse le `VariableContext` de `react-native-css-interop`. Les tokens NativeWind (`var(--foreground)` etc.) ne se résolvent pas dans ce contexte.
+
+**Fix** : envelopper le contenu de la sheet avec `<View style={isDark ? THEME_VARS.dark : THEME_VARS.light}>` où `THEME_VARS` est construit avec `vars()` de nativewind qui réinjecte les CSS variables. Voir `components/UserListSheet.tsx` comme référence.
+
+**Background color** : utiliser `backgroundStyle={{ backgroundColor: hex }}` sur `<BottomSheetModal>` (composant par défaut) — ne pas utiliser `backgroundComponent` custom (perd le border radius). Les hex doivent être en dur (hsl() n'est pas valide en inline style RN).
+
 Build a custom UI for **Social Boulder** (`sboulder.com`) by connecting directly to their backend via the **DDP protocol** (Meteor.js). There is no REST API — all communication uses WebSocket DDP.
 
 ## DDP connection
@@ -301,20 +309,21 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
   - Singleton dans `lib/ddp/client.ts`, partagé par tous les hooks
   - Login centralisé via `ensureLoggedIn()` — appelé une seule fois même si plusieurs hooks démarrent en parallèle
   - Pattern dans les hooks : `await ensureLoggedIn()` → `client.subscribe(...)` → `await sub.ready()` → `client.collection(...).fetch()`
+  - **Cleanup** : toujours utiliser `sub.remove()` (pas `sub.stop()`) dans le return d'un `useEffect`. `stop()` laisse la sub dans `this.subs` de simpleddp → React Strict Mode double-invoque les effets → le 2e montage récupère la sub stoppée et son `ready()` rejette sur le `nosub` du cleanup précédent.
 - **Scripts**: `npm run start/ios/android/web`, `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run storybook`
 
 ## Project structure
 
 ```
 app/
-  _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, i18n init)
+  _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, GestureHandlerRootView, BottomSheetModalProvider, i18n init)
   index.tsx            ← liste des blocs (wattabloc)
   boulder/
-    [id].tsx           ← page détail d'un bloc
+    [id].tsx           ← page détail d'un bloc (stats tappables → UserListSheet)
 components/
   BoulderCard.tsx      ← carte d'un bloc (grade, route types, holds color badge)
   BoulderCard.stories.tsx ← Storybook stories
-  BoulderStatRow.tsx   ← rangée de stats avec séparateurs verticaux (envois, flashs, likes)
+  BoulderStatRow.tsx   ← rangée de stats avec séparateurs verticaux (envois, flashs, likes) — stats tappables via onPress
   BoulderStatRow.stories.tsx ← Storybook stories
   FullScreenImage.tsx  ← visionneuse plein écran avec zoom (pinch, double-tap)
   FullScreenImage.stories.tsx ← Storybook stories
@@ -322,6 +331,10 @@ components/
   GymMap.stories.tsx   ← Storybook stories
   HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
   HoldsColorBadge.stories.tsx ← Storybook stories
+  UserAvatar.tsx       ← avatar circulaire avec initiales en fallback
+  UserAvatar.stories.tsx ← Storybook stories
+  UserListSheet.tsx    ← bottom-sheet liste de grimpeurs (sents/flashes/likes) — réinjecte les CSS vars NativeWind via vars()
+  UserListSheet.stories.tsx ← Storybook stories
   design-system/       ← stories Storybook (ColorPalette, Typography)
   ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
 lib/
@@ -334,18 +347,22 @@ lib/
       en.json          ← traductions anglaises
   suppress-lib-warnings.ts ← filtre les warnings de libs tierces (react-native-web, react-navigation)
   color.ts             ← isLightColor() + contrastColor() (utilitaires couleur partagés)
+  last-gym.ts          ← getLastGym() / setLastGym() via AsyncStorage (deeplink + fast-reload gym hint)
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge)
 hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
-  use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP)
+  use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
+  use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
 types/
   boulder.ts           ← type Boulder
   gym.ts               ← type Gym
+  user.ts              ← type User (id, profile.name)
 exploration/
-  ddp-fetch-boulders.js ← script Node.js de référence DDP (ne pas modifier)
+  ddp-fetch-boulders.js    ← fetch all active boulders from a gym
+  ddp-test-user-subs.js    ← test users.single subscriptions (confirmed working server-side)
 .rnstorybook/
   preview.tsx          ← décorateurs Storybook (fonts, fond blanc)
   main.ts              ← config Storybook
