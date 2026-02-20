@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import { getLastGym, setLastGym } from '@/lib/last-gym';
 import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
 
@@ -16,7 +17,8 @@ interface UseBoulder {
 /**
  * Fetches a single boulder by ID plus its gym data.
  * Uses already-populated collection data as a fast path (when navigating from the list).
- * Falls back to subscribing when deep-linking directly to the detail screen.
+ * Falls back to a targeted DDP subscription when deep-linking or fast-reloading,
+ * using the last visited gym stored in AsyncStorage as the selector hint.
  */
 export function useBoulder(id: string): UseBoulder {
   const [boulder, setBoulder] = useState<Boulder | null>(null);
@@ -36,12 +38,18 @@ export function useBoulder(id: string): UseBoulder {
         let found =
           (client.collection('boulders').fetch({}) as Boulder[]).find((b) => b.id === id) ?? null;
 
+        if (found) {
+          // Persist the gym so fast-reload and deep-links can use it as a subscription hint
+          setLastGym(found.gym);
+        }
+
         if (!found) {
-          // Deep-link fallback: subscribe to all boulders for wattabloc
-          boulderSub = client.subscribe('_boulders.list', { isClosed: null }, SORT, 200, null);
+          const gym = await getLastGym();
+          boulderSub = client.subscribe('_boulders.list', { gym, isClosed: null }, SORT, 200, null);
           await boulderSub.ready();
-          found =
-            (client.collection('boulders').fetch({}) as Boulder[]).find((b) => b.id === id) ?? null;
+          const allBoulders = client.collection('boulders').fetch({}) as Boulder[];
+          found = allBoulders.find((b) => b.id === id) ?? null;
+          if (found) setLastGym(found.gym);
         }
 
         if (!found) {

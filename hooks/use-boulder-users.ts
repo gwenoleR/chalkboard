@@ -36,13 +36,12 @@ export function useBoulderUsers(userIds: string[]): { users: User[]; loading: bo
         await ensureLoggedIn();
         const subscriptions = userIds.map((id) => client.subscribe('users.single', id));
         subs.push(...subscriptions);
-        await Promise.all(subscriptions.map((sub) => sub.ready()));
+        await Promise.allSettled(subscriptions.map((sub) => sub.ready()));
         if (cancelled) return;
-        const fetched = (client.collection('users').fetch({}) as User[]).filter((u) =>
-          userIds.includes(u.id)
-        );
+        const allUsers = client.collection('users').fetch({}) as User[];
+        const fetched = allUsers.filter((u) => userIds.includes(u.id));
         setState({ key, users: fetched, loading: false });
-      } catch {
+      } catch (e) {
         if (!cancelled) setState((prev) => ({ ...prev, loading: false }));
       }
     }
@@ -50,7 +49,10 @@ export function useBoulderUsers(userIds: string[]): { users: User[]; loading: bo
     load();
     return () => {
       cancelled = true;
-      subs.forEach((sub) => sub.stop());
+      // Use remove() instead of stop(): remove() clears the sub from simpleddp's internal
+      // this.subs list. With stop(), the sub stays in the list and the next subscribe() call
+      // returns the stale stopped sub, whose ready() then rejects with the pending nosub.
+      subs.forEach((sub) => sub.remove());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

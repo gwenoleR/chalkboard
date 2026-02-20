@@ -22,7 +22,9 @@ const client = global.__ddpClient;
  * Also survives fast-refresh: the promise is stored on `global` alongside the client.
  */
 export async function ensureLoggedIn(): Promise<void> {
-  if (global.__ddpLoginPromise) return global.__ddpLoginPromise;
+  if (global.__ddpLoginPromise) {
+    return global.__ddpLoginPromise;
+  }
   global.__ddpLoginPromise = (async () => {
     await client.connect();
     await client.call('login', { resume: process.env.EXPO_PUBLIC_DDP_TOKEN });
