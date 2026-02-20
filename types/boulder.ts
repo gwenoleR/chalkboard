@@ -5,6 +5,38 @@ export interface BoulderPicture {
   crop?: { x: number; y: number; width: number; height: number };
 }
 
+export interface BoulderCommentUserProfile {
+  name: string;
+  avatars?: { none?: boolean; [key: string]: unknown };
+  scores?: Record<string, unknown>;
+}
+
+/** A user post on a boulder: can contain text, a video, or both. */
+export interface BoulderComment {
+  /** simpleddp stores the DDP id as `id` */
+  id: string;
+  userId: string;
+  boulderId: string;
+  /** Parsed from the Astronomy-serialised userProfile field. */
+  userProfile: BoulderCommentUserProfile;
+  text: string;
+  /** Mux video ID (present when the post contains a video). */
+  videoId?: string;
+  videoSource?: string;
+  date: string;
+  highlighted?: boolean;
+}
+
+/** EJSON date as returned by the DDP server. */
+export interface DdpDate {
+  $date: number;
+}
+
+/** Converts a DDP date object to a JS Date. */
+export function ddpDateToDate(d: DdpDate): Date {
+  return new Date(d.$date);
+}
+
 export interface Boulder {
   /** simpleddp stores the DDP id as `id` (not `_id`) */
   id: string;
@@ -22,10 +54,15 @@ export interface Boulder {
   /** Zone number in the gym, maps to Gym.zones */
   zone?: number;
   boulderNum?: number;
-  createdAt: string;
-  closedAt?: string;
-  /** null = open, string date = closed */
-  isClosed: string | null;
+  createdAt: DdpDate | string;
+  /**
+   * Planned teardown date set by the gym.
+   * Use `ddpDateToDate(boulder.closedAt)` to get a JS Date.
+   * Display "dans X jours" = Math.ceil((closedAt.$date - Date.now()) / 86_400_000)
+   */
+  closedAt?: DdpDate;
+  /** null = open, DdpDate = already closed */
+  isClosed: DdpDate | null;
   sentsCount: number;
   sentsList: string[];
   flashesCount: number;

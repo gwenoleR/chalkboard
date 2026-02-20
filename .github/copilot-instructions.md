@@ -109,6 +109,7 @@ send({ msg: 'method', method: 'login', params: [{ resume: TOKEN }], id: '1' });
 | --------------------- | --------------------------------- | ------------------------------------ |
 | `_boulders.list`      | `[selector, sort, limit, cursor]` | `boulders`                           |
 | `_boulders.count`     | `[selector]`                      | `counters-collection`                |
+| `_boulders.comments`  | `[boulderId: String]`             | `comments`                           |
 | `access-points`       | `gymId: String`                   | `access_control` only (NOT boulders) |
 | `_gyms.info`          | `gymId: String`                   | `gyms`                               |
 | `_gyms.list`          | `selector: Object`                | `gyms`                               |
@@ -188,11 +189,14 @@ Key fields (confirmed live on wattabloc, 127 boulders):
 | `zone`                                    | `Number`              | → name via `gyms.zones`                                               |
 | `picture`                                 | `Object`              | `{ id, zoom, highlighted, share, ratio, width, crop }`                |
 | `boulderNum`                              | `Number`              | displayed number in gym                                               |
-| `isClosed`                                | `null \| true`        | **null** = open (not `false`!)                                        |
+| `createdAt`                               | `DdpDate`             | `{ $date: ms }` — use `ddpDateToDate()` to get a JS Date             |
+| `closedAt`                                | `DdpDate?`            | planned teardown date — `daysUntilTeardown(b.closedAt)` → days left  |
+| `isClosed`                                | `null \| DdpDate`     | **null** = open; `DdpDate` = already closed (actual closure date)    |
 | `sentsList` / `sentsCount`                | `userId[]` / `Number` |                                                                       |
 | `flashesList` / `flashesCount`            | `userId[]` / `Number` |                                                                       |
 | `likesList` / `likesCount` / `likesRatio` |                       |                                                                       |
 | `projectsList` / `followers`              | `userId[]`            |                                                                       |
+| `commentsCount` / `videosCount`           | `Number`              |                                                                       |
 
 ### Images (S3)
 
@@ -243,6 +247,22 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 }
 ```
 
+### `comments` (via `_boulders.comments`)
+
+User posts on a boulder — can contain text, a video (Mux), or both.
+
+| Field         | Type      | Notes                                                          |
+| ------------- | --------- | -------------------------------------------------------------- |
+| `userId`      | `String`  | author                                                         |
+| `boulderId`   | `String`  |                                                                |
+| `text`        | `String`  | can be empty (video-only post)                                 |
+| `videoId`     | `String?` | Mux video ID                                                   |
+| `videoSource` | `String?` | `"mux"`                                                        |
+| `date`        | `DdpDate` | `{ $date: ms }`                                                |
+| `highlighted` | `Boolean?`| pinned post (e.g. setter's beta video)                         |
+| `userProfile` | `Object`  | Astronomy-serialised — parse via `parseUserProfile()` in hook  |
+| `gymInfos`    | `Object`  | `{ name, appType }`                                            |
+
 ### `notifications`
 
 ```js
@@ -263,9 +283,12 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 
 `exploration/` contains Node.js scripts using the `ws` package. **Do not modify them** — use as reference.
 
-| Script                  | Purpose                                                                                               |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| `ddp-fetch-boulders.js` | Fetch all active boulders from a gym. Usage: `node exploration/ddp-fetch-boulders.js [gymId] [limit]` |
+| Script                          | Purpose                                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `ddp-fetch-boulders.js`         | Fetch all active boulders from a gym. Usage: `node exploration/ddp-fetch-boulders.js [gymId] [limit]` |
+| `ddp-test-user-subs.js`         | Test `users.single` subscriptions for a given userId                                                  |
+| `ddp-explore-boulder-detail.js` | Probe available subscriptions for a boulder (comments, media, etc.)                                   |
+| `ddp-explore-comments.js`       | Find boulders with comments and dump the `comments` collection schema                                 |
 
 ## i18n
 
@@ -349,20 +372,23 @@ lib/
   color.ts             ← isLightColor() + contrastColor() (utilitaires couleur partagés)
   last-gym.ts          ← getLastGym() / setLastGym() via AsyncStorage (deeplink + fast-reload gym hint)
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
-  utils.ts             ← cn() helper (clsx + tailwind-merge)
+  utils.ts             ← cn() helper (clsx + tailwind-merge) + daysUntilTeardown()
 hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
+  use-boulder-comments.ts ← subscribe _boulders.comments → { comments, loading, error } (texte + vidéo Mux)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
 types/
-  boulder.ts           ← type Boulder
+  boulder.ts           ← DdpDate, ddpDateToDate(), Boulder, BoulderComment, BoulderCommentUserProfile
   gym.ts               ← type Gym
   user.ts              ← type User (id, profile.name)
 exploration/
-  ddp-fetch-boulders.js    ← fetch all active boulders from a gym
-  ddp-test-user-subs.js    ← test users.single subscriptions (confirmed working server-side)
+  ddp-fetch-boulders.js        ← fetch all active boulders from a gym
+  ddp-test-user-subs.js        ← test users.single subscriptions (confirmed working server-side)
+  ddp-explore-boulder-detail.js ← probe available subs for a boulder
+  ddp-explore-comments.js      ← dump comments collection schema
 .rnstorybook/
   preview.tsx          ← décorateurs Storybook (fonts, fond blanc)
   main.ts              ← config Storybook

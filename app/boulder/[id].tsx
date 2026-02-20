@@ -25,9 +25,10 @@ const HERO_HEIGHT = 340;
 const PARALLAX_FACTOR = 0.35;
 const PARALLAX_OVERFLOW = HERO_HEIGHT * PARALLAX_FACTOR;
 
-/** Returns a human-readable relative duration from an ISO date string. */
-function formatAge(isoDate: string): string {
-  const days = Math.floor((Date.now() - new Date(isoDate).getTime()) / 86_400_000);
+/** Returns a human-readable relative duration from a DDP date or ISO date string. */
+function formatAge(date: { $date: number } | string): string {
+  const ts = typeof date === 'string' ? new Date(date).getTime() : date.$date;
+  const days = Math.floor((Date.now() - ts) / 86_400_000);
   if (days < 7) return `${days}j`;
   const weeks = Math.floor(days / 7);
   if (weeks < 5) return `${weeks} sem.`;
