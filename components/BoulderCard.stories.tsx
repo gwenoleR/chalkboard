@@ -160,3 +160,27 @@ export const NoPhoto: Story = {
     gym: mockGym,
   },
 };
+
+const MOCK_USER = 'user-123';
+
+export const SentByUser: Story = {
+  args: {
+    boulder: { ...baseBoulder, sentsCount: 5, sentsList: [MOCK_USER], likesList: [MOCK_USER] },
+    gym: mockGym,
+    userId: MOCK_USER,
+  },
+};
+
+export const FlashedByUser: Story = {
+  args: {
+    boulder: {
+      ...baseBoulder,
+      sentsCount: 3,
+      flashesCount: 1,
+      sentsList: [MOCK_USER],
+      flashesList: [MOCK_USER],
+    },
+    gym: mockGym,
+    userId: MOCK_USER,
+  },
+};

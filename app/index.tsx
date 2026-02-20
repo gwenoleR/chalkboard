@@ -1,6 +1,7 @@
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/ui/text';
@@ -9,12 +10,18 @@ import { GymMap } from '@/components/GymMap';
 import { useBoulders } from '@/hooks/use-boulders';
 import { useGym } from '@/hooks/use-gym';
 
+const USER_ID = process.env.EXPO_PUBLIC_DDP_USER_ID;
+
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { boulders, count, loading: bouldersLoading, error } = useBoulders();
+  const { boulders, count, loading: bouldersLoading, error, refresh } = useBoulders();
   const { gym, loading: gymLoading } = useGym('wattabloc');
   const [activeZone, setActiveZone] = useState<string | null>(null);
+
+  // Re-read the collection when navigating back from the detail screen so
+  // stat changes (sends, likes…) made there are reflected immediately.
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
   const loading = bouldersLoading || gymLoading;
 
@@ -50,6 +57,7 @@ export default function HomeScreen() {
           <BoulderCard
             boulder={item}
             gym={gym}
+            userId={USER_ID}
             onPress={() => router.push(`/boulder/${item.id}`)}
           />
         )}

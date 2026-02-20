@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import client, { ensureLoggedIn } from '@/lib/ddp/client';
 import type { Boulder } from '@/types/boulder';
@@ -13,6 +13,8 @@ interface UseBoulders {
   count: number | null;
   loading: boolean;
   error: string | null;
+  /** Re-reads the collection from the DDP client. Call on screen focus to pick up changes made in the detail screen. */
+  refresh: () => void;
 }
 
 /**
@@ -24,6 +26,11 @@ export function useBoulders(): UseBoulders {
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
+    const raw = client.collection('boulders').fetch({}) as Boulder[];
+    if (raw.length > 0) setBoulders(raw);
+  }, []);
 
   useEffect(() => {
     let subList: ReturnType<typeof client.subscribe> | null = null;
@@ -66,10 +73,10 @@ export function useBoulders(): UseBoulders {
     start();
 
     return () => {
-      subList?.stop();
-      subCount?.stop();
+      subList?.remove();
+      subCount?.remove();
     };
   }, []);
 
-  return { boulders, count, loading, error };
+  return { boulders, count, loading, error, refresh };
 }

@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Check, Heart, MessageCircle, Video } from 'lucide-react-native';
+import { Check, Heart, MessageCircle, Video, Zap } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { GymMap } from '@/components/GymMap';
@@ -13,20 +13,29 @@ import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
+const COLOR_SENT = '#2aab7e';
+const COLOR_FLASHED = '#f59e0b';
+const COLOR_LIKED = '#e35f8d';
 
 interface BoulderCardProps {
   boulder: Boulder;
   gym: Gym;
+  /** Current user ID — used to highlight sent/flashed/liked status. */
+  userId?: string;
   onPress?: () => void;
 }
 
-export function BoulderCard({ boulder, gym, onPress }: BoulderCardProps) {
+export function BoulderCard({ boulder, gym, userId, onPress }: BoulderCardProps) {
   const { t } = useTranslation();
   const labelHex = gym.labelsHexa?.[String(boulder.label)];
   const holdsKey = String(boulder.holdsColor);
   const holdsName = gym.holdsColors?.[holdsKey];
   const holdsHex = gym.holdsColorsHexa?.[holdsKey]?.[0];
   const zoneName = boulder.zone != null ? gym.zones?.[String(boulder.zone)]?.name : undefined;
+
+  const isFlashed = userId ? (boulder.flashesList?.includes(userId) ?? false) : false;
+  const isSent = userId ? (boulder.sentsList?.includes(userId) ?? false) : false;
+  const isLiked = userId ? (boulder.likesList?.includes(userId) ?? false) : false;
 
   const routeTypeNames = boulder.routeTypes
     ?.map((id) => gym.routeTypes?.find(([rid]) => rid === id)?.[1][0])
@@ -78,8 +87,18 @@ export function BoulderCard({ boulder, gym, onPress }: BoulderCardProps) {
               <View className="h-3 w-3 rounded-full" style={{ backgroundColor: labelHex }} />
             ) : null}
             <Text className="font-outfit-bold text-base">{boulder.grade}</Text>
-            <IconStat icon={Check} value={boulder.sentsCount} />
-            <IconStat icon={Heart} value={boulder.likesCount} />
+            <IconStat
+                icon={isFlashed ? Zap : Check}
+                value={boulder.sentsCount}
+                color={isFlashed ? COLOR_FLASHED : isSent ? COLOR_SENT : undefined}
+                fill={isFlashed ? COLOR_FLASHED : undefined}
+              />
+              <IconStat
+                icon={Heart}
+                value={boulder.likesCount}
+                color={isLiked ? COLOR_LIKED : undefined}
+                fill={isLiked ? COLOR_LIKED : undefined}
+              />
             <IconStat icon={MessageCircle} value={boulder.commentsCount} />
           </View>
           {routeTypeNames?.length ? (
