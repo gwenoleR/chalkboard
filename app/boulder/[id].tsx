@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, Drill, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Drill, Heart, MapPin } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedScrollHandler,
@@ -18,6 +18,9 @@ import { UserListSheet } from '@/components/UserListSheet';
 import { Text } from '@/components/ui/text';
 import { isLightColor } from '@/lib/color';
 import { useBoulder } from '@/hooks/use-boulder';
+import { useBoulderActions } from '@/hooks/use-boulder-actions';
+
+const USER_ID = process.env.EXPO_PUBLIC_DDP_USER_ID!;
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 const HERO_HEIGHT = 340;
@@ -42,6 +45,28 @@ export default function BoulderDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const { logSend, logFlash, removeSend, toggleLike } = useBoulderActions();
+
+  // Optimistic action state — initialised from server data once boulder loads
+  const [isSent, setIsSent] = useState(false);
+  const [isFlashed, setIsFlashed] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isActing, setIsActing] = useState(false);
+  // Optimistic count deltas — applied on top of the server-provided counts
+  const [sentsDelta, setSentsDelta] = useState(0);
+  const [flashesDelta, setFlashesDelta] = useState(0);
+  const [likesDelta, setLikesDelta] = useState(0);
+
+  useEffect(() => {
+    if (!boulder) return;
+    setIsSent(boulder.sentsList?.includes(USER_ID) ?? false);
+    setIsFlashed(boulder.flashesList?.includes(USER_ID) ?? false);
+    setIsLiked(boulder.likesList?.includes(USER_ID) ?? false);
+    // Reset deltas when boulder changes (e.g. deep-link to another boulder)
+    setSentsDelta(0);
+    setFlashesDelta(0);
+    setLikesDelta(0);
+  }, [boulder?.id]);
 
   const sheetRef = useRef<BottomSheetModal>(null);
   const [activeStatType, setActiveStatType] = useState<'sents' | 'flashes' | 'likes' | null>(null);
@@ -61,6 +86,89 @@ export default function BoulderDetailScreen() {
   function openUserList(type: 'sents' | 'flashes' | 'likes') {
     setActiveStatType(type);
     sheetRef.current?.present();
+  }
+
+  async function handleSend() {
+    if (isActing || !boulder) return;
+    setIsActing(true);
+    const wasFlashed = isFlashed;
+    const wasSentDelta = sentsDelta;
+    const wasFlashedDelta = flashesDelta;
+    if (isSent) {
+      setIsSent(false);
+      setIsFlashed(false);
+      setSentsDelta((d) => d - 1);
+      if (isFlashed) setFlashesDelta((d) => d - 1);
+    } else {
+      setIsSent(true);
+      setSentsDelta((d) => d + 1);
+    }
+    try {
+      if (isSent) {
+        await removeSend(boulder.id);
+      } else {
+        await logSend(boulder.id);
+      }
+    } catch {
+      setIsSent(isSent);
+      setIsFlashed(wasFlashed);
+      setSentsDelta(wasSentDelta);
+      setFlashesDelta(wasFlashedDelta);
+      Alert.alert(t('boulder.actionError'));
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleFlash() {
+    if (isActing || !boulder) return;
+    setIsActing(true);
+    const wasSent = isSent;
+    const wasSentDelta = sentsDelta;
+    const wasFlashedDelta = flashesDelta;
+    if (isFlashed) {
+      setIsFlashed(false);
+      setIsSent(false);
+      setFlashesDelta((d) => d - 1);
+      setSentsDelta((d) => d - 1);
+    } else {
+      setIsFlashed(true);
+      setIsSent(true);
+      setFlashesDelta((d) => d + 1);
+      if (!isSent) setSentsDelta((d) => d + 1);
+    }
+    try {
+      if (isFlashed) {
+        await removeSend(boulder.id);
+      } else {
+        await logFlash(boulder.id);
+      }
+    } catch {
+      setIsFlashed(isFlashed);
+      setIsSent(wasSent);
+      setSentsDelta(wasSentDelta);
+      setFlashesDelta(wasFlashedDelta);
+      Alert.alert(t('boulder.actionError'));
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleLike() {
+    if (isActing || !boulder) return;
+    setIsActing(true);
+    const wasLikesDelta = likesDelta;
+    setIsLiked((prev) => !prev);
+    setLikesDelta((d) => (isLiked ? d - 1 : d + 1));
+    try {
+      await toggleLike(boulder.id, isLiked);
+    } catch {
+      setIsLiked((prev) => !prev);
+      setLikesDelta(wasLikesDelta);
+      Alert.alert(t('boulder.actionError'));
+    } finally {
+      setIsActing(false);
+    }
   }
 
   // Shared value tracking scroll position for parallax
@@ -110,17 +218,17 @@ export default function BoulderDetailScreen() {
 
   const stats = [
     {
-      value: boulder.sentsCount,
+      value: boulder.sentsCount + sentsDelta,
       label: t('boulder.sends'),
       onPress: () => openUserList('sents'),
     },
     {
-      value: boulder.flashesCount,
+      value: boulder.flashesCount + flashesDelta,
       label: t('boulder.flashes'),
       onPress: () => openUserList('flashes'),
     },
     {
-      value: boulder.likesCount,
+      value: boulder.likesCount + likesDelta,
       label: t('boulder.likes'),
       onPress: () => openUserList('likes'),
     },
@@ -293,7 +401,6 @@ export default function BoulderDetailScreen() {
           left: 16,
           width: 40,
           height: 40,
-          // Shadow
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.15,
@@ -304,22 +411,60 @@ export default function BoulderDetailScreen() {
         <ArrowLeft size={20} color="#111111" />
       </Pressable>
 
+      {/* ── Floating like button ── */}
+      <Pressable
+        onPress={handleLike}
+        disabled={isActing}
+        className="absolute items-center justify-center rounded-full bg-background/90 active:opacity-70"
+        style={{
+          top: insets.top + 12,
+          right: 16,
+          width: 40,
+          height: 40,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: 4,
+        }}
+      >
+        <Heart
+          size={20}
+          color={isLiked ? '#e35f8d' : '#111111'}
+          fill={isLiked ? '#e35f8d' : 'transparent'}
+        />
+      </Pressable>
+
       {/* ── Sticky bottom bar ── */}
       <View
         className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-border bg-background px-6"
         style={{ paddingTop: 16, paddingBottom: insets.bottom + 16 }}
       >
-        {/* Flash — outline */}
-        <Pressable className="flex-1 items-center justify-center rounded-full border border-border py-4 active:opacity-70">
-          <Text className="font-outfit-semibold text-base">{t('boulder.flash')}</Text>
+        {/* Flash button */}
+        <Pressable
+          onPress={handleFlash}
+          disabled={isActing}
+          className="flex-1 items-center justify-center rounded-full border py-4 active:opacity-70"
+          style={{ borderColor: isFlashed ? '#e35f8d' : undefined }}
+        >
+          <Text
+            className="font-outfit-semibold text-base"
+            style={{ color: isFlashed ? '#e35f8d' : undefined }}
+          >
+            {isFlashed ? t('boulder.flashed') : t('boulder.flash')}
+          </Text>
         </Pressable>
 
-        {/* Send — primary filled */}
+        {/* Send button */}
         <Pressable
-          className="items-center justify-center rounded-full bg-primary py-4 active:opacity-80"
-          style={{ flex: 2 }}
+          onPress={handleSend}
+          disabled={isActing}
+          className="items-center justify-center rounded-full py-4 active:opacity-80"
+          style={{ flex: 2, backgroundColor: isSent ? '#2aab7e' : '#e35f8d' }}
         >
-          <Text className="font-outfit-semibold text-base text-white">{t('boulder.send')}</Text>
+          <Text className="font-outfit-semibold text-base text-white">
+            {isSent ? t('boulder.sent') : t('boulder.send')}
+          </Text>
         </Pressable>
       </View>
 

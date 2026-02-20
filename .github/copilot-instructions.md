@@ -191,6 +191,10 @@ send({ msg:'method', method:'_boulders.notSend',
 send({ msg:'method', method:'_boulders.like',
   params:[boulderId, userId, false, false] })
 
+// Unlike
+send({ msg:'method', method:'_boulders.notLike',
+  params:[boulderId, userId, false, false] })
+
 // Get the user's send count per zone (returns result directly)
 // selector: { gym, sentsList: userId, isClosed: null } → also works with flashesList, projectsList
 send({ msg:'method', method:'_boulders.getZonesCount',

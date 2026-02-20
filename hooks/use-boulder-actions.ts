@@ -11,8 +11,8 @@ interface UseBoulderActions {
   logFlash: (boulderId: string) => Promise<void>;
   /** Remove a previously logged send or flash. */
   removeSend: (boulderId: string) => Promise<void>;
-  /** Toggle the like on a boulder. */
-  toggleLike: (boulderId: string) => Promise<void>;
+  /** Like or unlike a boulder. Pass the current liked state so the correct method is called. */
+  toggleLike: (boulderId: string, isLiked: boolean) => Promise<void>;
   /** Mark a boulder as a project. */
   addProject: (boulderId: string) => Promise<void>;
   /** Remove a boulder from projects. */
@@ -34,6 +34,7 @@ interface UseBoulderActions {
  *   _boulders.project   (boulderId, userId, false, false)
  *   _boulders.notProject (boulderId)
  *   _boulders.like      (boulderId, userId, false, false)
+ *   _boulders.notLike   (boulderId, userId, false, false)  ← unlike (tested, returns updated)
  *   _boulders.saveComment ({ text, boulderId, coach, fromHomescreen, uploadId })
  *   _boulders.deleteComment (commentId, false)
  */
@@ -53,9 +54,13 @@ export function useBoulderActions(): UseBoulderActions {
     await client.call('_boulders.notSend', boulderId, true, USER_ID, false);
   }, []);
 
-  const toggleLike = useCallback(async (boulderId: string) => {
+  const toggleLike = useCallback(async (boulderId: string, isLiked: boolean) => {
     await ensureLoggedIn();
-    await client.call('_boulders.like', boulderId, USER_ID, false, false);
+    if (isLiked) {
+      await client.call('_boulders.notLike', boulderId, USER_ID, false, false);
+    } else {
+      await client.call('_boulders.like', boulderId, USER_ID, false, false);
+    }
   }, []);
 
   const addProject = useCallback(async (boulderId: string) => {
