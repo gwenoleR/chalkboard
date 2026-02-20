@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import type { Boulder } from '@/types/boulder';
 
-const GYM = 'wattabloc';
 const LIMIT = 200;
-const SELECTOR = { gym: GYM, isClosed: null };
 const SORT = { isClosed: 1, createdAt: -1, boulderNum: -1, label: -1, holdsColor: -1 };
 
 interface UseBoulders {
@@ -18,10 +16,10 @@ interface UseBoulders {
 }
 
 /**
- * Subscribes to the boulder list and count for the hardcoded gym.
+ * Subscribes to the boulder list and count for the given gym.
  * Reactively fetches active boulders (isClosed: null) sorted by recency.
  */
-export function useBoulders(): UseBoulders {
+export function useBoulders(gymId: string): UseBoulders {
   const [boulders, setBoulders] = useState<Boulder[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,12 +34,14 @@ export function useBoulders(): UseBoulders {
     let subList: ReturnType<typeof client.subscribe> | null = null;
     let subCount: ReturnType<typeof client.subscribe> | null = null;
 
+    const selector = { gym: gymId, isClosed: null };
+
     async function start() {
       try {
         await ensureDDPConnected();
 
-        subCount = client.subscribe('_boulders.count', SELECTOR);
-        subList = client.subscribe('_boulders.list', SELECTOR, SORT, LIMIT, null);
+        subCount = client.subscribe('_boulders.count', selector);
+        subList = client.subscribe('_boulders.list', selector, SORT, LIMIT, null);
 
         // Fast path: collection data survives fast-refresh (client is on global).
         // Render immediately with cached data while subscriptions re-establish.
@@ -76,7 +76,7 @@ export function useBoulders(): UseBoulders {
       subList?.remove();
       subCount?.remove();
     };
-  }, []);
+  }, [gymId]);
 
   return { boulders, count, loading, error, refresh };
 }

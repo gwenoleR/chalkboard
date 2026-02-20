@@ -154,6 +154,10 @@ See `exploration/ddp-fetch-boulders.js` for a ready-to-run script.
 
 Known gyms for the current user: `wattabloc`, `wattabloc/pans`, `wattabloc/spraywall`, `wattabloc/pan`, `isatix`, `auperchoir`, `arkose`, `arkose/massy`, `sb`
 
+The full dynamic list is fetched via `_gyms.list` subscription. Filter for permanent gyms: keep entries with `bouldersLifeLength` set and without `contestType` or `startDate` (contests/events have these). `wattabloc` may not appear in `_gyms.list` — `KNOWN_GYMS` in `lib/known-gyms.ts` is always merged as fallback.
+
+The selected gym is persisted in AsyncStorage (`selectedGym` key) via `use-selected-gym.ts`. Null → redirect to `app/onboarding.tsx`.
+
 ## DDP methods
 
 ```js
@@ -263,6 +267,9 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 `${S3}/800/bouldersPics/${picture.id}.jpg` // 800px wide
 `${S3}/bouldersZooms/${picture.zoom}.jpg` // zoomed crop
 `${S3}/boulderPicsShare/${picture.share}.jpg`; // 1200px share
+
+// Gym logos — fields from _gyms.list / _gyms.info: filesGym (slug path) + logoType (png|webp|svg)
+`${S3}/gyms/${filesGym}/logo.${logoType}` // e.g. /gyms/wattabloc/logo.png
 ```
 
 ### `gyms` (wattabloc mappings)
@@ -428,26 +435,31 @@ const MUX_STREAM = 'https://stream.mux.com';
 ```
 app/
   _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, GestureHandlerRootView, BottomSheetModalProvider, i18n init)
-  index.tsx            ← liste des blocs (wattabloc) — useFocusEffect → refresh() au retour du détail
+  index.tsx            ← boulder list — dynamic gym via useSelectedGym, GymPickerModal in header, useFocusEffect → refresh()
   login.tsx            ← écran de connexion (email/password + mode invité)
+  onboarding.tsx       ← gym selection (first launch or selectedGym === null) — search + sections (My gyms / others / Arkose)
   profile.tsx          ← profil utilisateur (avatar, stats par salle incl. blocs démontés, déconnexion)
   boulder/
     [id].tsx           ← détail d'un bloc — actions send/flash/like (optimistic updates + deltas de compteurs), like flottant top-right
 components/
+  Avatar.tsx           ← circular user avatar with initials fallback
+  Avatar.stories.tsx   ← Storybook stories
   BoulderCard.tsx      ← carte d'un bloc — prop userId optionnelle pour afficher statut sent/flashed/liked (icônes colorées)
   BoulderCard.stories.tsx ← Storybook stories
   BoulderStatRow.tsx   ← rangée de stats avec séparateurs verticaux (envois, flashs, likes) — stats tappables via onPress
   BoulderStatRow.stories.tsx ← Storybook stories
   FullScreenImage.tsx  ← visionneuse plein écran avec zoom (pinch, double-tap)
   FullScreenImage.stories.tsx ← Storybook stories
+  GymAvatar.tsx        ← gym logo avatar (S3 logo + initials fallback) — uses getGymLogoUrl()
+  GymAvatar.stories.tsx ← Storybook stories
   GymMap.tsx           ← plan SVG de la salle (zones cliquables)
   GymMap.stories.tsx   ← Storybook stories
-  HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
-  HoldsColorBadge.stories.tsx ← Storybook stories
-  Avatar.tsx           ← avatar circulaire avec initiales en fallback
-  Avatar.stories.tsx   ← Storybook stories
+  GymPickerModal.tsx   ← bottom-sheet gym switcher with search bar + sections (my gyms / others / Arkose)
+  GymPickerModal.stories.tsx ← Storybook stories
   GymStatsCard.tsx     ← stats gym (sends incl. blocs démontés, meilleure cote, dernier envoi)
   GymStatsCard.stories.tsx ← Storybook stories
+  HoldsColorBadge.tsx  ← badge couleur des prises (contraste auto)
+  HoldsColorBadge.stories.tsx ← Storybook stories
   VideoPlayerModal.tsx     ← full-screen Mux HLS player (native: expo-video)
   VideoPlayerModal.web.tsx ← web-specific override using hls.js + raw <video> element
   VideoPlayerModal.stories.tsx ← Storybook stories
@@ -466,21 +478,24 @@ lib/
     locales/
       fr.json          ← traductions françaises
       en.json          ← traductions anglaises
+  known-gyms.ts        ← GymInfo type, KNOWN_GYMS static list, getGymDisplayName(), getGymLogoUrl()
   suppress-lib-warnings.ts ← filtre les warnings de libs tierces (react-native-web, react-navigation)
   color.ts             ← isLightColor() + contrastColor() (utilitaires couleur partagés)
   last-gym.ts          ← getLastGym() / setLastGym() via AsyncStorage (deeplink + fast-reload gym hint)
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge) + daysUntilTeardown()
 hooks/
-  use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error, refresh }
+  use-boulders.ts      ← subscribe _boulders.list + _boulders.count for a gym → { boulders, count, loading, error, refresh }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
   use-zones-count.ts   ← _boulders.getZonesCount query → { counts, loading, refresh } (sends/flashes/projects per zone)
   use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, addProject, removeProject, saveComment, deleteComment)
   use-boulder-comments.ts ← subscribe _boulders.comments + _videos.details → { comments, loading, error } (text + Mux video with resolved playbackId)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
+  use-gyms-list.ts     ← subscribe _gyms.list, filter permanent gyms (bouldersLifeLength + no contestType/startDate), merge with KNOWN_GYMS → { gyms, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
   use-current-user.ts  ← subscribe users.single → { user, loading } (profil complet de l'utilisateur connecté)
+  use-selected-gym.ts  ← AsyncStorage key "selectedGym" — returns null when unset (triggers onboarding redirect) → { gymId, isLoading, setGymId }
   use-user-sends-count.ts ← _boulders.count pour un user (incl. blocs démontés) → { count, loading }
 types/
   boulder.ts           ← DdpDate, ddpDateToDate(), Boulder, BoulderComment, BoulderCommentUserProfile
@@ -491,6 +506,7 @@ exploration/
   ddp-test-user-subs.js        ← test users.single subscriptions (confirmed working server-side)
   ddp-explore-boulder-detail.js ← probe available subs for a boulder
   ddp-explore-comments.js      ← dump comments collection schema
+  ddp-explore-gyms.js          ← list all gyms from _gyms.list subscription
   ddp-explore-profile.js       ← explore users.single + _boulders.count for profile page
 .rnstorybook/
   preview.tsx          ← décorateurs Storybook (fonts, fond blanc)

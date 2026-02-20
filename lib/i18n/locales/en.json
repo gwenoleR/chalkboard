@@ -53,5 +53,18 @@
     "likesListTitle": "Likes",
     "userCount_one": "{{count}} climber",
     "userCount_other": "{{count}} climbers"
+  },
+  "onboarding": {
+    "title": "Choose a gym",
+    "subtitle": "Select your gym to get started",
+    "confirm": "Get started"
+  },
+  "gymPicker": {
+    "title": "Change gym",
+    "myGyms": "My gyms",
+    "otherGyms": "Other gyms",
+    "arkoseGyms": "Arkose",
+    "search": "Search a gym...",
+    "noResults": "No gym found"
   }
 }

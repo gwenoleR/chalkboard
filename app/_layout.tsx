@@ -26,6 +26,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSelectedGym } from '@/hooks/use-selected-gym';
 import { NAV_THEME } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/auth/auth-context';
 
@@ -44,12 +45,15 @@ function RootLayout() {
     DMSans_600SemiBold,
     DMSans_700Bold,
   });
-  const { isLoading, userId, isGuest } = useAuth();
+  const { isLoading: authLoading, userId, isGuest } = useAuth();
+  const { gymId, isLoading: gymLoading } = useSelectedGym();
 
-  if (!fontsLoaded || isLoading) return null;
+  if (!fontsLoaded || authLoading || gymLoading) return null;
 
   // Not authenticated and not browsing as guest → redirect to login.
   const needsLogin = !userId && !isGuest;
+  // Authenticated (or guest) but no gym selected yet → onboarding.
+  const needsOnboarding = !needsLogin && gymId === null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -59,9 +63,11 @@ function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="boulder/[id]" options={{ headerShown: false, animation: 'slide_from_right' }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
             <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack>
           {needsLogin && <Redirect href="/login" />}
+          {needsOnboarding && <Redirect href="/onboarding" />}
           <StatusBar style="auto" />
           <PortalHost />
         </BottomSheetModalProvider>

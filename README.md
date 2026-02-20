@@ -10,6 +10,7 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 
 - 🗺️ Browse boulders by gym, grade, and color — immersive card feed with full-width photos
 - 🔐 Sign in with your Social Boulder account — or browse as a guest
+- 🏟️ Multi-gym support — onboarding picker, switch gym from the header, search by name or city
 - 🖼️ Full-width boulder photos with holds color badge and label dot
 - 📍 Mini gym floor plan on each card with the boulder's zone highlighted
 - 🎬 Play beta videos full-screen on boulder detail (Mux HLS, works on iOS/Android/web)
@@ -110,19 +111,25 @@ npm run format:check
 ```
 app/                  ← Expo Router screens
   login.tsx           ← Login screen (email/password + guest mode)
+  onboarding.tsx      ← Gym selection on first launch (or when no gym selected)
   profile.tsx         ← Profile screen (avatar, gym stats, logout)
 components/
-  Avatar.tsx          ← Circular avatar with initials fallback
+  Avatar.tsx          ← Circular user avatar with initials fallback
+  GymAvatar.tsx       ← Gym logo avatar (S3 logo + initials fallback)
+  GymPickerModal.tsx  ← Bottom-sheet gym switcher with search + sections
   GymStatsCard.tsx    ← Gym stats card (sends incl. dismounted, best grade, last send)
   design-system/      ← Storybook stories
   ui/                 ← react-native-reusables components
 lib/
   auth/               ← AuthProvider, useAuth(), secure storage
   i18n/               ← Translations (fr, en)
+  known-gyms.ts       ← Static GymInfo list + getGymLogoUrl() + getGymDisplayName()
   theme.ts            ← Design tokens
   utils.ts            ← cn() helper
 hooks/                ← Custom React hooks
-  use-current-user.ts ← Subscribe users.single → current user profile
+  use-current-user.ts     ← Subscribe users.single → current user profile
+  use-gyms-list.ts        ← Dynamic gym list from _gyms.list DDP, merged with KNOWN_GYMS
+  use-selected-gym.ts     ← AsyncStorage-backed selected gym (null → redirect to onboarding)
   use-user-sends-count.ts ← _boulders.count for a user (incl. closed boulders)
 exploration/          ← DDP reference scripts (Node.js)
 ```

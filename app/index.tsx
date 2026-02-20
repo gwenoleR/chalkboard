@@ -1,27 +1,35 @@
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronDown } from 'lucide-react-native';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/Avatar';
 import { BoulderCard } from '@/components/BoulderCard';
 import { GymMap } from '@/components/GymMap';
+import { GymPickerModal } from '@/components/GymPickerModal';
 import { useBoulders } from '@/hooks/use-boulders';
 import { useGym } from '@/hooks/use-gym';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { useSelectedGym } from '@/hooks/use-selected-gym';
 import { useAuth } from '@/lib/auth/auth-context';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { userId } = useAuth();
   const { user } = useCurrentUser();
-  const { boulders, count, loading: bouldersLoading, error, refresh } = useBoulders();
-  const { gym, loading: gymLoading } = useGym('wattabloc');
+  const { gymId, setGymId } = useSelectedGym();
+  const pickerRef = useRef<BottomSheetModal>(null);
+
+  // gymId is guaranteed non-null here (layout redirects to /onboarding if null)
+  const activeGymId = gymId ?? 'wattabloc';
+
+  const { boulders, count, loading: bouldersLoading, error, refresh } = useBoulders(activeGymId);
+  const { gym, loading: gymLoading } = useGym(activeGymId);
   const [activeZone, setActiveZone] = useState<string | null>(null);
 
   // Re-read the collection when navigating back from the detail screen so
@@ -47,10 +55,9 @@ export default function HomeScreen() {
     );
   }
 
-  if (!gym) return null;
+  const countLabel = count !== null ? ` · ${t('gym.boulderCount', { count })}` : '';
 
-  const title =
-    count !== null ? `${gym.name} · ${t('gym.boulderCount', { count })}` : gym.name;
+  if (!gym) return null;
 
   return (
     <View className="flex-1 bg-background">
@@ -68,9 +75,18 @@ export default function HomeScreen() {
         )}
         ListHeaderComponent={
           <View>
-            {/* Top bar: title + avatar */}
+            {/* Top bar: gym picker + avatar */}
             <View className="flex-row items-center justify-between pb-4 pt-4">
-              <Text className="font-outfit-bold text-2xl">{title}</Text>
+              <Pressable
+                onPress={() => pickerRef.current?.present()}
+                className="flex-row items-center gap-1 active:opacity-70"
+              >
+                <Text className="font-outfit-bold text-2xl">{gym.name}</Text>
+                <ChevronDown size={20} className="text-muted-foreground" />
+              </Pressable>
+              {count !== null && (
+                <Text className="font-dm-sans text-sm text-muted-foreground">{t('gym.boulderCount', { count })}</Text>
+              )}
               <Pressable onPress={() => router.push('/profile')} className="active:opacity-70">
                 <Avatar
                   name={user?.profile.name ?? '?'}
@@ -91,6 +107,12 @@ export default function HomeScreen() {
             ) : null}
           </View>
         }
+      />
+      <GymPickerModal
+        sheetRef={pickerRef as React.RefObject<BottomSheetModal | null>}
+        selectedGymId={activeGymId}
+        userGymIds={Object.keys(user?.profile?.scores ?? {})}
+        onSelect={setGymId}
       />
     </View>
   );

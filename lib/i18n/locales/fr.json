@@ -53,5 +53,18 @@
     "likesListTitle": "Likes",
     "userCount_one": "{{count}} grimpeur",
     "userCount_other": "{{count}} grimpeurs"
+  },
+  "onboarding": {
+    "title": "Choisir une salle",
+    "subtitle": "Sélectionne ta salle pour commencer",
+    "confirm": "Commencer"
+  },
+  "gymPicker": {
+    "title": "Changer de salle",
+    "myGyms": "Mes salles",
+    "otherGyms": "Autres salles",
+    "arkoseGyms": "Arkose",
+    "search": "Rechercher une salle...",
+    "noResults": "Aucune salle trouvée"
   }
 }
