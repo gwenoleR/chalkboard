@@ -16,6 +16,7 @@ import { useGym } from '@/hooks/use-gym';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useSelectedGym } from '@/hooks/use-selected-gym';
 import { useAuth } from '@/lib/auth/auth-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -60,7 +61,7 @@ export default function HomeScreen() {
   if (!gym) return null;
 
   return (
-    <View className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background">
       <FlatList
         data={boulders}
         keyExtractor={(b) => b.id}
@@ -114,6 +115,6 @@ export default function HomeScreen() {
         userGymIds={Object.keys(user?.profile?.scores ?? {})}
         onSelect={setGymId}
       />
-    </View>
+    </SafeAreaView>
   );
 }

@@ -32,7 +32,6 @@ export function useBoulders(gymId: string): UseBoulders {
 
   useEffect(() => {
     let subList: ReturnType<typeof client.subscribe> | null = null;
-    let subCount: ReturnType<typeof client.subscribe> | null = null;
 
     const selector = { gym: gymId, isClosed: null };
 
@@ -40,28 +39,21 @@ export function useBoulders(gymId: string): UseBoulders {
       try {
         await ensureDDPConnected();
 
-        subCount = client.subscribe('_boulders.count', selector);
         subList = client.subscribe('_boulders.list', selector, SORT, LIMIT, null);
 
-        // Fast path: collection data survives fast-refresh (client is on global).
-        // Render immediately with cached data while subscriptions re-establish.
+        // Fast path: render immediately with cached data while subscription re-establishes.
         const cached = client.collection('boulders').fetch({}) as Boulder[];
         if (cached.length > 0) {
           setBoulders(cached);
-          const cachedCounters = client.collection('counters-collection').fetch({}) as {
-            count: number;
-          }[];
-          if (cachedCounters.length > 0) setCount(cachedCounters[0].count);
+          setCount(cached.length);
           setLoading(false);
         }
 
-        await Promise.all([subCount.ready(), subList.ready()]);
+        await subList.ready();
 
         const raw = client.collection('boulders').fetch({}) as Boulder[];
         setBoulders(raw);
-
-        const counters = client.collection('counters-collection').fetch({}) as { count: number }[];
-        if (counters.length > 0) setCount(counters[0].count);
+        setCount(raw.length);
 
         setLoading(false);
       } catch (e: unknown) {
@@ -74,7 +66,6 @@ export function useBoulders(gymId: string): UseBoulders {
 
     return () => {
       subList?.remove();
-      subCount?.remove();
     };
   }, [gymId]);
 

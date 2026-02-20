@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
 
 import client, { ensureDDPConnected } from '@/lib/ddp/client';
+import type { Boulder } from '@/types/boulder';
 
 interface UseUserSendsCountResult {
   count: number | null;
   loading: boolean;
 }
 
+const SORT = { isClosed: 1, createdAt: -1 };
+const LIMIT = 500;
+
 /**
  * Returns the total number of boulders sent by a user in a gym,
  * including closed/dismounted boulders.
  *
- * Uses `_boulders.count` with `{ gym, sentsList: userId }` — the same
- * selector Social Boulder uses on the profile page.
+ * Uses `_boulders.list` with `{ gym, sentsList: userId }` and counts
+ * results client-side. Avoids `counters-collection` whose single shared
+ * document (`countBoulders`) gets overwritten when multiple gym stats
+ * cards subscribe simultaneously.
  */
 export function useUserSendsCount(gymSlug: string, userId: string | null): UseUserSendsCountResult {
   const [count, setCount] = useState<number | null>(null);
@@ -32,13 +38,17 @@ export function useUserSendsCount(gymSlug: string, userId: string | null): UseUs
       await ensureDDPConnected();
       if (cancelled) return;
 
-      const selector = { gym: gymSlug, sentsList: userId };
-      sub = client.subscribe('_boulders.count', selector);
+      sub = client.subscribe('_boulders.list', { gym: gymSlug, sentsList: userId }, SORT, LIMIT, null);
       await sub.ready();
       if (cancelled) return;
 
-      const counters = client.collection('counters-collection').fetch({}) as { count: number }[];
-      setCount(counters[0]?.count ?? 0);
+      // Filter client-side: gym + sentsList.includes(userId) to isolate
+      // this user's boulders even when other subscriptions share the collection.
+      const all = client.collection('boulders').fetch({}) as Boulder[];
+      const sent = all.filter(
+        (b) => b.gym === gymSlug && Array.isArray(b.sentsList) && b.sentsList.includes(userId)
+      );
+      setCount(sent.length);
       setLoading(false);
     })();
 

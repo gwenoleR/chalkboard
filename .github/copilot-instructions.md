@@ -485,7 +485,7 @@ lib/
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge) + daysUntilTeardown()
 hooks/
-  use-boulders.ts      ← subscribe _boulders.list + _boulders.count for a gym → { boulders, count, loading, error, refresh }
+  use-boulders.ts      ← subscribe _boulders.list for a gym → { boulders, count (derived from boulders.length), loading, error, refresh }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
   use-zones-count.ts   ← _boulders.getZonesCount query → { counts, loading, refresh } (sends/flashes/projects per zone)
@@ -496,7 +496,7 @@ hooks/
   use-color-scheme.ts  ← hook color scheme (web-safe)
   use-current-user.ts  ← subscribe users.single → { user, loading } (profil complet de l'utilisateur connecté)
   use-selected-gym.ts  ← AsyncStorage key "selectedGym" — returns null when unset (triggers onboarding redirect) → { gymId, isLoading, setGymId }
-  use-user-sends-count.ts ← _boulders.count pour un user (incl. blocs démontés) → { count, loading }
+  use-user-sends-count.ts ← _boulders.list {sentsList: userId} pour un user (incl. blocs démontés), comptage côté client → { count, loading }. Évite counters-collection (collision entre subs simultanées)
 types/
   boulder.ts           ← DdpDate, ddpDateToDate(), Boulder, BoulderComment, BoulderCommentUserProfile
   gym.ts               ← type Gym
