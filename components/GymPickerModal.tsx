@@ -12,6 +12,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useGymsList } from '@/hooks/use-gyms-list';
 import type { GymInfo } from '@/lib/known-gyms';
 import { getGymDisplayName } from '@/lib/known-gyms';
+import { THEME } from '@/lib/theme';
 
 export interface GymPickerModalProps {
   sheetRef: React.RefObject<BottomSheetModal | null>;
@@ -92,6 +93,7 @@ export function GymPickerModal({
   const bgColor = isDark ? '#1e1418' : '#ffffff';
   const handleColor = isDark ? '#374151' : '#d1d5db';
   const inputText = isDark ? '#f0e8ed' : '#1a0d12';
+  const mutedFg = THEME[isDark ? 'dark' : 'light'].mutedForeground;
   const { gyms: allGyms, loading: gymsLoading } = useGymsList();
   const [query, setQuery] = useState('');
 
@@ -144,12 +146,12 @@ export function GymPickerModal({
 
         {/* Search bar — BottomSheetTextInput doesn't support className, use bg-card via NativeWind on wrapper */}
         <View className="mx-4 mb-2 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
-          <Search size={16} color="hsl(var(--muted-foreground))" />
+          <Search size={16} color={mutedFg} />
           <BottomSheetTextInput
             value={query}
             onChangeText={setQuery}
             placeholder={t('gymPicker.search')}
-            placeholderTextColor="hsl(var(--muted-foreground))"
+            placeholderTextColor={mutedFg}
             style={{ flex: 1, fontFamily: 'DMSans_400Regular', fontSize: 15, color: inputText, padding: 0 }}
             autoCorrect={false}
           />

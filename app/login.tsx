@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/lib/auth/auth-context';
+import { THEME } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
 export default function LoginScreen() {
@@ -13,6 +15,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login, loginAsGuest } = useAuth();
+  const colorScheme = useColorScheme();
+  const mutedFg = THEME[colorScheme === 'dark' ? 'dark' : 'light'].mutedForeground;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +57,7 @@ export default function LoginScreen() {
             'font-dm-sans text-base text-foreground'
           )}
           placeholder={t('auth.email')}
-          placeholderTextColor="hsl(var(--muted-foreground))"
+          placeholderTextColor={mutedFg}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
@@ -69,7 +73,7 @@ export default function LoginScreen() {
             'font-dm-sans text-base text-foreground'
           )}
           placeholder={t('auth.password')}
-          placeholderTextColor="hsl(var(--muted-foreground))"
+          placeholderTextColor={mutedFg}
           secureTextEntry
           textContentType="password"
           value={password}

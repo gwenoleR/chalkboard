@@ -10,7 +10,9 @@ import { Text } from '@/components/ui/text';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useGymsList } from '@/hooks/use-gyms-list';
 import { useSelectedGym } from '@/hooks/use-selected-gym';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { GymInfo } from '@/lib/known-gyms';
+import { THEME } from '@/lib/theme';
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
@@ -22,6 +24,8 @@ export default function OnboardingScreen() {
 
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const colorScheme = useColorScheme();
+  const mutedFg = THEME[colorScheme === 'dark' ? 'dark' : 'light'].mutedForeground;
 
   const gym = (id: string): GymInfo =>
     allGyms.find((g) => g.id === id) ?? { id, name: id, city: '' };
@@ -66,12 +70,12 @@ export default function OnboardingScreen() {
 
       {/* Search bar */}
       <View className="mx-4 mb-3 flex-row items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
-        <Search size={16} color="hsl(var(--muted-foreground))" />
+        <Search size={16} color={mutedFg} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder={t('gymPicker.search')}
-          placeholderTextColor="hsl(var(--muted-foreground))"
+          placeholderTextColor={mutedFg}
           className="flex-1 font-dm-sans text-base text-foreground"
           style={{ padding: 0 }}
           autoCorrect={false}
