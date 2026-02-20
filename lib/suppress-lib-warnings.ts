@@ -8,6 +8,7 @@ const IGNORED_SUBSTRINGS = [
   'Unknown event handler property',
   'onStartShouldSetResponder',
   'onResponder',
+  'SafeAreaView has been deprecated',
 ];
 
 LogBox.ignoreLogs(IGNORED_SUBSTRINGS);

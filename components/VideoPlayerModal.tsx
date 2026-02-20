@@ -34,7 +34,6 @@ export function VideoPlayerModal({ videoId, onClose }: VideoPlayerModalProps) {
         <VideoView
           player={player}
           style={{ flex: 1 }}
-          allowsFullscreen
           nativeControls
         />
 
