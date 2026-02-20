@@ -11,7 +11,7 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 - 🗺️ Browse boulders by gym, grade, and color — immersive card feed with full-width photos
 - 🖼️ Full-width boulder photos with holds color badge and label dot
 - 📍 Mini gym floor plan on each card with the boulder's zone highlighted
-- 🎬 "Beta" badge on cards that have a demo video
+- 🎬 Play beta videos full-screen on boulder detail (Mux HLS, works on iOS/Android/web)
 - ✅ Log sends and flashes — buttons adapt to your current status (sent/flashed)
 - ❤️ Like boulders — floating heart button, fills instantly
 - 💬 View user comments and beta videos on each boulder
@@ -31,6 +31,7 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 | Styling       | [NativeWind v4](https://www.nativewind.dev) (Tailwind CSS)                                                        |
 | UI components | [react-native-reusables](https://reactnativereusables.com) + [lucide-react-native](https://lucide.dev) |
 | Backend       | DDP over WebSocket ([simpleddp](https://github.com/Gregivy/simpleddp))                                            |
+| Video         | [expo-video](https://docs.expo.dev/versions/latest/sdk/video/) (native) + [hls.js](https://github.com/video-dev/hls.js) (web) |
 | i18n          | [i18next](https://www.i18next.com) + [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/) |
 | Design system | French Rose `#e35f8d` × Teal `#2aab7e` · Outfit + DM Sans                                                         |
 | Storybook     | [@storybook/react-native](https://storybook.js.org/docs/react-native)                                             |

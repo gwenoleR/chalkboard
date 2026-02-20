@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, Drill, Hammer, Heart, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Drill, Hammer, Heart, MapPin, Play } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedScrollHandler,
@@ -15,15 +15,18 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BoulderStatRow } from '@/components/BoulderStatRow';
 import { FullScreenImage } from '@/components/FullScreenImage';
 import { UserListSheet } from '@/components/UserListSheet';
+import { VideoPlayerModal } from '@/components/VideoPlayerModal';
 import { Text } from '@/components/ui/text';
 import { isLightColor } from '@/lib/color';
 import { daysUntilTeardown } from '@/lib/utils';
 import { useBoulder } from '@/hooks/use-boulder';
 import { useBoulderActions } from '@/hooks/use-boulder-actions';
+import { useBoulderComments } from '@/hooks/use-boulder-comments';
 
 const USER_ID = process.env.EXPO_PUBLIC_DDP_USER_ID!;
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
+const MUX_IMAGE = 'https://image.mux.com';
 const HERO_HEIGHT = 340;
 // Extra image height to fill the gap revealed by parallax translation
 const PARALLAX_FACTOR = 0.35;
@@ -42,10 +45,12 @@ function formatAge(date: Date | { $date: number } | string): string {
 export default function BoulderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { boulder, gym, loading, error } = useBoulder(id);
+  const { comments } = useBoulderComments(id ?? '');
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const { logSend, logFlash, removeSend, toggleLike } = useBoulderActions();
 
   // Optimistic action state — initialised from server data once boulder loads
@@ -247,6 +252,11 @@ export default function BoulderDetailScreen() {
         />
       ) : null}
 
+      <VideoPlayerModal
+        videoId={activeVideoId}
+        onClose={() => setActiveVideoId(null)}
+      />
+
       {/* ── Scrollable body ── */}
       <Animated.ScrollView
         className="flex-1"
@@ -349,6 +359,57 @@ export default function BoulderDetailScreen() {
               </View>
             </>
           ) : null}
+
+          {/* Beta videos */}
+          {(() => {
+            const videoComments = comments.filter((c) => c.playbackId);
+            if (videoComments.length === 0) return null;
+            return (
+              <>
+                <View className="h-px bg-border" />
+                <View className="py-5">
+                  <Text className="mb-3 font-dm-sans text-xs uppercase tracking-widest text-muted-foreground">
+                    {t('boulder.betaVideos')}
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-6 px-6">
+                    <View className="flex-row gap-3">
+                      {videoComments.map((comment) => (
+                        <Pressable
+                          key={comment.id}
+                          onPress={() => setActiveVideoId(comment.playbackId!)}
+                          className="overflow-hidden rounded-xl active:opacity-80"
+                          style={{ width: 140, height: 200 }}
+                        >
+                          <Image
+                            source={{ uri: `${MUX_IMAGE}/${comment.playbackId}/thumbnail.jpg` }}
+                            style={{ width: 140, height: 200 }}
+                            contentFit="cover"
+                          />
+                          {/* Play overlay */}
+                          <View
+                            className="absolute inset-0 items-center justify-center"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
+                          >
+                            <View className="items-center justify-center rounded-full bg-white/90" style={{ width: 44, height: 44 }}>
+                              <Play size={20} color="#111111" fill="#111111" />
+                            </View>
+                          </View>
+                          {/* Author name */}
+                          {comment.userProfile?.name ? (
+                            <View className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-4">
+                              <Text className="font-dm-sans-medium text-xs text-white" style={{ textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>
+                                {comment.userProfile.name}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </Pressable>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              </>
+            );
+          })()}
 
           {/* Route setters */}
           {boulder.routeSetter && boulder.routeSetter.length > 0 ? (

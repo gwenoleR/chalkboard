@@ -1,4 +1,16 @@
 import SimpleDDP from 'simpleddp';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const EJSON = require('ejson') as { addType: (name: string, factory: (v: unknown) => unknown) => void };
+
+// Register the Astronomy custom type used by Social Boulder's server-side ODM.
+// Without this, simpleddp-core's EJSON.parse throws "Custom EJSON type Astronomy is
+// not defined" and silently drops any DDP message containing serialised Astronomy
+// objects (e.g. the `userProfile` field in the `comments` collection).
+try {
+  EJSON.addType('Astronomy', (value: unknown) => value);
+} catch {
+  // Already registered (e.g. fast-refresh re-execution)
+}
 
 // Persist the client and login promise on `global` so fast-refresh cycles
 // reuse the same WebSocket connection instead of creating a new one each time.

@@ -112,6 +112,7 @@ send({ msg: 'method', method: 'login', params: [{ resume: TOKEN }], id: '1' });
 | `_boulders.list`      | `[selector, sort, limit, cursor]` | `boulders`                           |
 | `_boulders.count`     | `[selector]`                      | `counters-collection`                |
 | `_boulders.comments`  | `[boulderId: String]`             | `comments`                           |
+| `_videos.details`     | `[uploadId: String]`              | `videos`                             |
 | `access-points`       | `gymId: String`                   | `access_control` only (NOT boulders) |
 | `_gyms.info`          | `gymId: String`                   | `gyms`                               |
 | `_gyms.list`          | `selector: Object`                | `gyms`                               |
@@ -308,12 +309,40 @@ User posts on a boulder — can contain text, a video (Mux), or both.
 | `userId`      | `String`  | author                                                         |
 | `boulderId`   | `String`  |                                                                |
 | `text`        | `String`  | can be empty (video-only post)                                 |
-| `videoId`     | `String?` | Mux video ID                                                   |
+| `videoId`     | `String?` | Mux **upload ID** — NOT the playback ID. Resolve via `_videos.details` sub. |
 | `videoSource` | `String?` | `"mux"`                                                        |
 | `date`        | `DdpDate` | `{ $date: ms }`                                                |
 | `highlighted` | `Boolean?`| pinned post (e.g. setter's beta video)                         |
 | `userProfile` | `Object`  | Astronomy-serialised — parse via `parseUserProfile()` in hook  |
 | `gymInfos`    | `Object`  | `{ name, appType }`                                            |
+
+> **⚠️ EJSON Astronomy type** : The `userProfile` field uses `{$type:"Astronomy",...}` serialisation.
+> `simpleddp-core` uses EJSON.parse and throws `Custom EJSON type Astronomy is not defined`,
+> silently dropping the entire DDP message. Fix: `EJSON.addType('Astronomy', v => v)` in `lib/ddp/client.ts`.
+
+### `videos` (via `_videos.details`)
+
+Resolved Mux video details for a given upload ID.
+
+| Field         | Type     | Notes                                           |
+| ------------- | -------- | ----------------------------------------------- |
+| `uploadId`    | `String` | Matches `videoId` in the `comments` collection  |
+| `playbackId`  | `String` | Mux playback ID — use for stream and thumbnail  |
+| `assetId`     | `String` | Mux asset ID                                    |
+| `aspectRatio` | `String` | e.g. `"9:16"`                                   |
+| `status`      | `String` | `"ready"` when stream is available              |
+| `commentId`   | `String` | Links back to the comment                       |
+
+Mux URLs:
+```js
+const MUX_IMAGE  = 'https://image.mux.com';
+const MUX_STREAM = 'https://stream.mux.com';
+`${MUX_IMAGE}/${playbackId}/thumbnail.jpg`          // thumbnail
+`${MUX_STREAM}/${playbackId}.m3u8?max_resolution=720p` // HLS stream
+```
+
+> On web, Chrome does not natively support HLS. Use `hls.js` via `VideoPlayerModal.web.tsx`
+> (platform-specific file). On iOS/Android, `VideoPlayerModal.tsx` uses `expo-video` natively.
 
 ### `notifications`
 
@@ -341,6 +370,8 @@ User posts on a boulder — can contain text, a video (Mux), or both.
 | `ddp-test-user-subs.js`         | Test `users.single` subscriptions for a given userId                                                  |
 | `ddp-explore-boulder-detail.js` | Probe available subscriptions for a boulder (comments, media, etc.)                                   |
 | `ddp-explore-comments.js`       | Find boulders with comments and dump the `comments` collection schema                                 |
+| `ddp-explore-video-comments.js` | Find comments with video for a specific boulder, dump `videoId` and `videoSource`                     |
+| `ddp-explore-video-id.js`       | Dump all video-related fields on a boulder and its comments (confirms videoId = upload ID)            |
 
 ## i18n
 
@@ -385,6 +416,8 @@ User posts on a boulder — can contain text, a video (Mux), or both.
   - Login centralisé via `ensureLoggedIn()` — appelé une seule fois même si plusieurs hooks démarrent en parallèle
   - Pattern dans les hooks : `await ensureLoggedIn()` → `client.subscribe(...)` → `await sub.ready()` → `client.collection(...).fetch()`
   - **Cleanup** : toujours utiliser `sub.remove()` (pas `sub.stop()`) dans le return d'un `useEffect`. `stop()` laisse la sub dans `this.subs` de simpleddp → React Strict Mode double-invoque les effets → le 2e montage récupère la sub stoppée et son `ready()` rejette sur le `nosub` du cleanup précédent.
+  - **EJSON Astronomy** : `EJSON.addType('Astronomy', v => v)` enregistré dans `lib/ddp/client.ts`. Sans ça, simpleddp-core lève une erreur sur les messages contenant `{$type:"Astronomy"}` et les ignore silencieusement.
+- **Video**: `expo-video` (native iOS/Android) + `hls.js` (web) — voir `VideoPlayerModal.tsx` / `VideoPlayerModal.web.tsx`
 - **Scripts**: `npm run start/ios/android/web`, `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run storybook`
 
 ## Project structure
@@ -408,6 +441,9 @@ components/
   HoldsColorBadge.stories.tsx ← Storybook stories
   UserAvatar.tsx       ← avatar circulaire avec initiales en fallback
   UserAvatar.stories.tsx ← Storybook stories
+  VideoPlayerModal.tsx     ← full-screen Mux HLS player (native: expo-video)
+  VideoPlayerModal.web.tsx ← web-specific override using hls.js + raw <video> element
+  VideoPlayerModal.stories.tsx ← Storybook stories
   UserListSheet.tsx    ← bottom-sheet liste de grimpeurs (sents/flashes/likes) — réinjecte les CSS vars NativeWind via vars()
   UserListSheet.stories.tsx ← Storybook stories
   design-system/       ← stories Storybook (ColorPalette, Typography)
@@ -431,7 +467,7 @@ hooks/
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
   use-zones-count.ts   ← _boulders.getZonesCount query → { counts, loading, refresh } (sends/flashes/projects per zone)
   use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, addProject, removeProject, saveComment, deleteComment)
-  use-boulder-comments.ts ← subscribe _boulders.comments → { comments, loading, error } (texte + vidéo Mux)
+  use-boulder-comments.ts ← subscribe _boulders.comments + _videos.details → { comments, loading, error } (text + Mux video with resolved playbackId)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
 types/

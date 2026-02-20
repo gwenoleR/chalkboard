@@ -20,9 +20,11 @@ export interface BoulderComment {
   /** Parsed from the Astronomy-serialised userProfile field. */
   userProfile: BoulderCommentUserProfile;
   text: string;
-  /** Mux video ID (present when the post contains a video). */
+  /** Mux upload ID (from the `comments` collection). Use `playbackId` for streaming. */
   videoId?: string;
   videoSource?: string;
+  /** Mux playback ID — resolved via `_videos.details` subscription. */
+  playbackId?: string;
   date: string;
   highlighted?: boolean;
 }
