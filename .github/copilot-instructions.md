@@ -191,6 +191,12 @@ send({ msg:'method', method:'_boulders.notSend',
 send({ msg:'method', method:'_boulders.like',
   params:[boulderId, userId, false, false] })
 
+// Get the user's send count per zone (returns result directly)
+// selector: { gym, sentsList: userId, isClosed: null } → also works with flashesList, projectsList
+send({ msg:'method', method:'_boulders.getZonesCount',
+  params:[{ gym: 'wattabloc', sentsList: userId, isClosed: null }] })
+// result: { "1": 0, "2": 0, "5": 1, ... }  — keys are zone IDs (see gyms.zones)
+
 // Add to projects
 send({ msg:'method', method:'_boulders.project',
   params:[boulderId, userId, false, false] })
@@ -415,6 +421,7 @@ hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
+  use-zones-count.ts   ← _boulders.getZonesCount query → { counts, loading, refresh } (sends/flashes/projects per zone)
   use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, addProject, removeProject, saveComment, deleteComment)
   use-boulder-comments.ts ← subscribe _boulders.comments → { comments, loading, error } (texte + vidéo Mux)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
