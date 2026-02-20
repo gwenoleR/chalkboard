@@ -172,6 +172,36 @@ Signature: `(boulderId: String, isFlash: Boolean, userId: String, isCoach: Boole
 
 Other methods: `_boulders.dislike(boulderId)`, `_users.markAllNotificationsAsRead()`, `_generateCSVData(gymId, '')`
 
+### Boulder action methods (confirmed from web app)
+
+```js
+// Log a send
+send({ msg:'method', method:'_boulders.send',
+  params:[boulderId, true, userId, false, false, false, false] })
+
+// Log a flash
+send({ msg:'method', method:'_boulders.flash',
+  params:[boulderId, userId, false, false] })
+
+// Remove a send/flash
+send({ msg:'method', method:'_boulders.notSend',
+  params:[boulderId, true, userId, false] })
+
+// Toggle like
+send({ msg:'method', method:'_boulders.like',
+  params:[boulderId, userId, false, false] })
+
+// Post a comment (text; uploadId null = no video)
+send({ msg:'method', method:'_boulders.saveComment',
+  params:[{ text, boulderId, coach:false, fromHomescreen:false, uploadId:null }] })
+
+// Delete a comment
+send({ msg:'method', method:'_boulders.deleteComment',
+  params:[commentId, false] })
+```
+
+All action responses return `{ msg:"updated", methods:[id] }` (not a `result` — no return value).
+
 ## Collections schema
 
 ### `boulders`
@@ -377,6 +407,7 @@ hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
+  use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, saveComment, deleteComment)
   use-boulder-comments.ts ← subscribe _boulders.comments → { comments, loading, error } (texte + vidéo Mux)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
