@@ -96,13 +96,16 @@ Build a custom UI for **Social Boulder** (`sboulder.com`) by connecting directly
 
 - **WebSocket URL**: `wss://www.sboulder.com/sockjs/websocket`
 - **Required header**: `Origin: https://www.sboulder.com`
-- **Auth**: token dans `.env` → `EXPO_PUBLIC_DDP_TOKEN` / `EXPO_PUBLIC_DDP_USER_ID` (ne jamais committer `.env`)
+- **Auth**: managed by `lib/auth/auth-context.tsx` (`AuthProvider` + `useAuth()`). Token persisted in device keychain via `expo-secure-store`.
 
 ```js
-// Connection sequence
-send({ msg: 'connect', version: '1', support: ['1'] });
-// On 'connected':
+// Email + password login (password hashed SHA-256 client-side via expo-crypto)
+send({ msg: 'method', method: 'login', params: [{ user: { email }, password: { digest: sha256(password), algorithm: 'sha-256' } }], id: '1' });
+// Token resume (on app start)
 send({ msg: 'method', method: 'login', params: [{ resume: TOKEN }], id: '1' });
+// Logout
+send({ msg: 'method', method: 'logout', params: [] });
+// Login response: { id: userId, token, tokenExpires: { $date: ms } }
 ```
 
 ## DDP subscriptions
@@ -450,7 +453,10 @@ components/
   ui/                  ← composants RNR (ajoutés via CLI, ne pas modifier manuellement)
 lib/
   ddp/
-    client.ts          ← singleton simpleddp + ensureLoggedIn() (login unique partagé, survit au fast-refresh via global)
+    client.ts          ← singleton simpleddp + ensureDDPConnected() (connect only) + ddpLogin/ddpResume/ddpLogout
+  auth/
+    auth-context.tsx   ← AuthProvider + useAuth() hook ({ userId, isGuest, isLoading, login, loginAsGuest, logout })
+    secure-storage.ts  ← saveCredentials / loadCredentials / clearCredentials (expo-secure-store keychain)
   i18n/
     index.ts           ← config i18next (langue device, fallback fr)
     locales/
@@ -499,4 +505,4 @@ const ddp = new SimpleDDP({
 ```
 
 - **CORS**: server declares `"origins": ["*:*"]` — no restriction on the Origin header
-- **Auth token**: valid until 2126, stored in `.env` (gitignored)
+- **Auth**: `useAuth()` from `lib/auth/auth-context`. `userId` is null for guests. Data hooks call `ensureDDPConnected()` (no auth). Action hooks (`use-boulder-actions`) call `requireAuth()` which throws if guest.

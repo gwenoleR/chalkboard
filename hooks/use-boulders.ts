@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import type { Boulder } from '@/types/boulder';
 
 const GYM = 'wattabloc';
@@ -38,7 +38,7 @@ export function useBoulders(): UseBoulders {
 
     async function start() {
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
 
         subCount = client.subscribe('_boulders.count', SELECTOR);
         subList = client.subscribe('_boulders.list', SELECTOR, SORT, LIMIT, null);

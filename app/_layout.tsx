@@ -3,7 +3,7 @@ import '../lib/i18n';
 import '../lib/suppress-lib-warnings';
 
 import { ThemeProvider, type Theme } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
@@ -27,6 +27,7 @@ import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { NAV_THEME } from '@/lib/theme';
+import { AuthProvider, useAuth } from '@/lib/auth/auth-context';
 
 const LIGHT_THEME: Theme = NAV_THEME.light;
 const DARK_THEME: Theme = NAV_THEME.dark;
@@ -43,8 +44,12 @@ function RootLayout() {
     DMSans_600SemiBold,
     DMSans_700Bold,
   });
+  const { isLoading, userId, isGuest } = useAuth();
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || isLoading) return null;
+
+  // Not authenticated and not browsing as guest → redirect to login.
+  const needsLogin = !userId && !isGuest;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -53,7 +58,9 @@ function RootLayout() {
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="boulder/[id]" options={{ headerShown: false, animation: 'slide_from_right' }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
           </Stack>
+          {needsLogin && <Redirect href="/login" />}
           <StatusBar style="auto" />
           <PortalHost />
         </BottomSheetModalProvider>
@@ -62,7 +69,15 @@ function RootLayout() {
   );
 }
 
+function RootLayoutWithAuth() {
+  return (
+    <AuthProvider>
+      <RootLayout />
+    </AuthProvider>
+  );
+}
+
 export default process.env.EXPO_PUBLIC_STORYBOOK_ENABLED === 'true'
   ? // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('../.rnstorybook').default
-  : RootLayout;
+  : RootLayoutWithAuth;

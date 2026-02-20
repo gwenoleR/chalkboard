@@ -22,8 +22,7 @@ import { daysUntilTeardown } from '@/lib/utils';
 import { useBoulder } from '@/hooks/use-boulder';
 import { useBoulderActions } from '@/hooks/use-boulder-actions';
 import { useBoulderComments } from '@/hooks/use-boulder-comments';
-
-const USER_ID = process.env.EXPO_PUBLIC_DDP_USER_ID!;
+import { useAuth } from '@/lib/auth/auth-context';
 
 const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 const MUX_IMAGE = 'https://image.mux.com';
@@ -47,6 +46,7 @@ export default function BoulderDetailScreen() {
   const { boulder, gym, loading, error } = useBoulder(id);
   const { comments } = useBoulderComments(id ?? '');
   const { t } = useTranslation();
+  const { userId, isGuest } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -65,14 +65,14 @@ export default function BoulderDetailScreen() {
 
   useEffect(() => {
     if (!boulder) return;
-    setIsSent(boulder.sentsList?.includes(USER_ID) ?? false);
-    setIsFlashed(boulder.flashesList?.includes(USER_ID) ?? false);
-    setIsLiked(boulder.likesList?.includes(USER_ID) ?? false);
+    setIsSent(userId ? (boulder.sentsList?.includes(userId) ?? false) : false);
+    setIsFlashed(userId ? (boulder.flashesList?.includes(userId) ?? false) : false);
+    setIsLiked(userId ? (boulder.likesList?.includes(userId) ?? false) : false);
     // Reset deltas when boulder changes (e.g. deep-link to another boulder)
     setSentsDelta(0);
     setFlashesDelta(0);
     setLikesDelta(0);
-  }, [boulder?.id]);
+  }, [boulder?.id, userId]);
 
   const sheetRef = useRef<BottomSheetModal>(null);
   const [activeStatType, setActiveStatType] = useState<'sents' | 'flashes' | 'likes' | null>(null);
@@ -491,61 +491,76 @@ export default function BoulderDetailScreen() {
         <ArrowLeft size={20} color="#111111" />
       </Pressable>
 
-      {/* ── Floating like button ── */}
-      <Pressable
-        onPress={handleLike}
-        disabled={isActing}
-        className="absolute items-center justify-center rounded-full bg-background/90 active:opacity-70"
-        style={{
-          top: insets.top + 12,
-          right: 16,
-          width: 40,
-          height: 40,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: 4,
-        }}
-      >
-        <Heart
-          size={20}
-          color={isLiked ? '#e35f8d' : '#111111'}
-          fill={isLiked ? '#e35f8d' : 'transparent'}
-        />
-      </Pressable>
+      {/* ── Floating like button (authenticated only) ── */}
+      {!isGuest && (
+        <Pressable
+          onPress={handleLike}
+          disabled={isActing}
+          className="absolute items-center justify-center rounded-full bg-background/90 active:opacity-70"
+          style={{
+            top: insets.top + 12,
+            right: 16,
+            width: 40,
+            height: 40,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 4,
+          }}
+        >
+          <Heart
+            size={20}
+            color={isLiked ? '#e35f8d' : '#111111'}
+            fill={isLiked ? '#e35f8d' : 'transparent'}
+          />
+        </Pressable>
+      )}
 
       {/* ── Sticky bottom bar ── */}
       <View
-        className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-border bg-background px-6"
+        className="absolute bottom-0 left-0 right-0 border-t border-border bg-background px-6"
         style={{ paddingTop: 16, paddingBottom: insets.bottom + 16 }}
       >
-        {/* Flash button */}
-        <Pressable
-          onPress={handleFlash}
-          disabled={isActing}
-          className="flex-1 items-center justify-center rounded-full border py-4 active:opacity-70"
-          style={{ borderColor: isFlashed ? '#e35f8d' : undefined }}
-        >
-          <Text
-            className="font-outfit-semibold text-base"
-            style={{ color: isFlashed ? '#e35f8d' : undefined }}
+        {isGuest ? (
+          <Pressable
+            onPress={() => router.push('/login')}
+            className="items-center justify-center rounded-full bg-primary py-4 active:opacity-80"
           >
-            {isFlashed ? t('boulder.flashed') : t('boulder.flash')}
-          </Text>
-        </Pressable>
+            <Text className="font-outfit-semibold text-base text-primary-foreground">
+              {t('auth.loginToInteract')}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="flex-row gap-3">
+            {/* Flash button */}
+            <Pressable
+              onPress={handleFlash}
+              disabled={isActing}
+              className="flex-1 items-center justify-center rounded-full border py-4 active:opacity-70"
+              style={{ borderColor: isFlashed ? '#e35f8d' : undefined }}
+            >
+              <Text
+                className="font-outfit-semibold text-base"
+                style={{ color: isFlashed ? '#e35f8d' : undefined }}
+              >
+                {isFlashed ? t('boulder.flashed') : t('boulder.flash')}
+              </Text>
+            </Pressable>
 
-        {/* Send button */}
-        <Pressable
-          onPress={handleSend}
-          disabled={isActing}
-          className="items-center justify-center rounded-full py-4 active:opacity-80"
-          style={{ flex: 2, backgroundColor: isSent ? '#2aab7e' : '#e35f8d' }}
-        >
-          <Text className="font-outfit-semibold text-base text-white">
-            {isSent ? t('boulder.sent') : t('boulder.send')}
-          </Text>
-        </Pressable>
+            {/* Send button */}
+            <Pressable
+              onPress={handleSend}
+              disabled={isActing}
+              className="items-center justify-center rounded-full py-4 active:opacity-80"
+              style={{ flex: 2, backgroundColor: isSent ? '#2aab7e' : '#e35f8d' }}
+            >
+              <Text className="font-outfit-semibold text-base text-white">
+                {isSent ? t('boulder.sent') : t('boulder.send')}
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <UserListSheet

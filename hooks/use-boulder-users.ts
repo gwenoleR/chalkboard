@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import type { User } from '@/types/user';
 
 interface State {
@@ -33,7 +33,7 @@ export function useBoulderUsers(userIds: string[]): { users: User[]; loading: bo
 
     async function load() {
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
         const subscriptions = userIds.map((id) => client.subscribe('users.single', id));
         subs.push(...subscriptions);
         await Promise.allSettled(subscriptions.map((sub) => sub.ready()));

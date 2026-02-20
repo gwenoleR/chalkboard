@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import type { BoulderComment, BoulderCommentUserProfile, DdpDateLike } from '@/types/boulder';
 import { ddpDateToDate } from '@/types/boulder';
 
@@ -52,7 +52,7 @@ export function useBoulderComments(boulderId: string): UseBoulderComments {
 
     async function load() {
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
 
         sub = client.subscribe('_boulders.comments', boulderId);
         await sub.ready();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import { getLastGym, setLastGym } from '@/lib/last-gym';
 import type { Boulder } from '@/types/boulder';
 import type { Gym } from '@/types/gym';
@@ -32,7 +32,7 @@ export function useBoulder(id: string): UseBoulder {
 
     async function load() {
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
 
         // Fast path: boulder already in collection from the list screen
         let found =

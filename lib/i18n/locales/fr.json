@@ -1,4 +1,14 @@
 {
+  "auth": {
+    "title": "Connexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "continueAsGuest": "Continuer sans compte",
+    "error": "Email ou mot de passe incorrect",
+    "loggingIn": "Connexion en cours...",
+    "loginToInteract": "Se connecter pour interagir"
+  },
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur est survenue",

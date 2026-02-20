@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 
 /** Zone ID → number of boulders matching the query in that zone. */
 export type ZonesCount = Record<string, number>;
@@ -39,7 +39,7 @@ export function useZonesCount(selector: Record<string, unknown>): UseZonesCount 
       setLoading(true);
       setError(null);
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
         const result = await client.call('_boulders.getZonesCount', selector);
         if (!cancelled) setCounts(result as ZonesCount);
       } catch (e: unknown) {

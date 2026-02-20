@@ -9,12 +9,12 @@ import { BoulderCard } from '@/components/BoulderCard';
 import { GymMap } from '@/components/GymMap';
 import { useBoulders } from '@/hooks/use-boulders';
 import { useGym } from '@/hooks/use-gym';
-
-const USER_ID = process.env.EXPO_PUBLIC_DDP_USER_ID;
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { userId } = useAuth();
   const { boulders, count, loading: bouldersLoading, error, refresh } = useBoulders();
   const { gym, loading: gymLoading } = useGym('wattabloc');
   const [activeZone, setActiveZone] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export default function HomeScreen() {
           <BoulderCard
             boulder={item}
             gym={gym}
-            userId={USER_ID}
+            userId={userId ?? undefined}
             onPress={() => router.push(`/boulder/${item.id}`)}
           />
         )}

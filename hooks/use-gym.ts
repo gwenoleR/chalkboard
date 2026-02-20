@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import client, { ensureLoggedIn } from '@/lib/ddp/client';
+import client, { ensureDDPConnected } from '@/lib/ddp/client';
 import type { Gym } from '@/types/gym';
 
 /**
@@ -16,7 +16,7 @@ export function useGym(gymId: string): { gym: Gym | null; loading: boolean } {
 
     async function start() {
       try {
-        await ensureLoggedIn();
+        await ensureDDPConnected();
 
         sub = client.subscribe('_gyms.info', gymId);
         await sub.ready();

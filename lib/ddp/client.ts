@@ -1,4 +1,5 @@
 import SimpleDDP from 'simpleddp';
+import * as Crypto from 'expo-crypto';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const EJSON = require('ejson') as { addType: (name: string, factory: (v: unknown) => unknown) => void };
 
@@ -12,11 +13,11 @@ try {
   // Already registered (e.g. fast-refresh re-execution)
 }
 
-// Persist the client and login promise on `global` so fast-refresh cycles
+// Persist the client and connect promise on `global` so fast-refresh cycles
 // reuse the same WebSocket connection instead of creating a new one each time.
 declare global {
   var __ddpClient: SimpleDDP | undefined;
-  var __ddpLoginPromise: Promise<void> | null | undefined;
+  var __ddpConnectPromise: Promise<void> | null | undefined;
 }
 
 if (!global.__ddpClient) {
@@ -30,18 +31,51 @@ if (!global.__ddpClient) {
 const client = global.__ddpClient;
 
 /**
- * Ensures login happens only once, even if called concurrently from multiple hooks.
- * Also survives fast-refresh: the promise is stored on `global` alongside the client.
+ * Ensures the WebSocket is connected. Does NOT authenticate.
+ * Call this from data hooks — auth is handled separately by AuthContext.
  */
-export async function ensureLoggedIn(): Promise<void> {
-  if (global.__ddpLoginPromise) {
-    return global.__ddpLoginPromise;
+export async function ensureDDPConnected(): Promise<void> {
+  if (global.__ddpConnectPromise) {
+    return global.__ddpConnectPromise;
   }
-  global.__ddpLoginPromise = (async () => {
-    await client.connect();
-    await client.call('login', { resume: process.env.EXPO_PUBLIC_DDP_TOKEN });
-  })();
-  return global.__ddpLoginPromise;
+  global.__ddpConnectPromise = client.connect();
+  return global.__ddpConnectPromise;
+}
+
+interface DDPLoginResult {
+  id: string;
+  token: string;
+  tokenExpires: { $date: number };
+}
+
+/**
+ * Authenticates with email + password (Meteor standard SHA-256 password hash).
+ * Returns the session token and userId on success.
+ */
+export async function ddpLogin(email: string, password: string): Promise<DDPLoginResult> {
+  await ensureDDPConnected();
+  const digest = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    password
+  );
+  return client.call('login', {
+    user: { email },
+    password: { digest, algorithm: 'sha-256' },
+  }) as Promise<DDPLoginResult>;
+}
+
+/**
+ * Re-authenticates using a previously issued token (persisted in secure storage).
+ * Throws if the token is expired or invalid.
+ */
+export async function ddpResume(token: string): Promise<DDPLoginResult> {
+  await ensureDDPConnected();
+  return client.call('login', { resume: token }) as Promise<DDPLoginResult>;
+}
+
+/** Logs out the current DDP session. */
+export async function ddpLogout(): Promise<void> {
+  await client.call('logout');
 }
 
 export default client;
