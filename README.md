@@ -12,8 +12,12 @@ A custom mobile & web UI for [Social Boulder](https://sboulder.com) — track yo
 - 🖼️ Full-width boulder photos with holds color badge and label dot
 - 📍 Mini gym floor plan on each card with the boulder's zone highlighted
 - 🎬 "Beta" badge on cards that have a demo video
-- ✅ Log sends and flashes
-- 📊 Track your progress and stats over time (sends, likes, comments)
+- ✅ Log sends and flashes — buttons adapt to your current status (sent/flashed)
+- ❤️ Like boulders — floating heart button, fills instantly
+- 💬 View user comments and beta videos on each boulder
+- ⏳ See the planned teardown date for each boulder
+- 🟢 Cards show your personal status (sent ✓, flashed ⚡, liked ♥) at a glance
+- 📊 Stats update instantly on action (optimistic updates)
 - 🌍 Multi-language support (French & English)
 - 🌙 Light & dark mode
 

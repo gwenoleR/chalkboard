@@ -43,6 +43,8 @@
 - Toute la logique DDP dans `lib/ddp/` (hooks + client)
 - Jamais d'appel DDP direct dans les composants — passer par des hooks (`use-boulders.ts`, etc.)
 - Les credentials viennent exclusivement de `process.env.EXPO_PUBLIC_*`
+- **Mises à jour optimistes** : après une action (`logSend`, `toggleLike`…), mettre à jour l'état local immédiatement et reverter en cas d'erreur. Le serveur envoie un `changed` DDP qui met à jour la collection ; appeler `refresh()` (ou `useFocusEffect`) pour re-lire le snapshot.
+- **Statut utilisateur sur les blocs** : dériver `isSent/isFlashed/isLiked` depuis `boulder.sentsList/flashesList/likesList.includes(USER_ID)` — pas de champ dédié côté serveur.
 
 ### Langue
 
@@ -388,11 +390,11 @@ User posts on a boulder — can contain text, a video (Mux), or both.
 ```
 app/
   _layout.tsx          ← root layout (fonts, NAV_THEME, PortalHost, GestureHandlerRootView, BottomSheetModalProvider, i18n init)
-  index.tsx            ← liste des blocs (wattabloc)
+  index.tsx            ← liste des blocs (wattabloc) — useFocusEffect → refresh() au retour du détail
   boulder/
-    [id].tsx           ← page détail d'un bloc (stats tappables → UserListSheet)
+    [id].tsx           ← détail d'un bloc — actions send/flash/like (optimistic updates + deltas de compteurs), like flottant top-right
 components/
-  BoulderCard.tsx      ← carte d'un bloc (grade, route types, holds color badge)
+  BoulderCard.tsx      ← carte d'un bloc — prop userId optionnelle pour afficher statut sent/flashed/liked (icônes colorées)
   BoulderCard.stories.tsx ← Storybook stories
   BoulderStatRow.tsx   ← rangée de stats avec séparateurs verticaux (envois, flashs, likes) — stats tappables via onPress
   BoulderStatRow.stories.tsx ← Storybook stories
@@ -422,7 +424,7 @@ lib/
   theme.ts             ← THEME (toutes les couleurs résolues) + NAV_THEME
   utils.ts             ← cn() helper (clsx + tailwind-merge) + daysUntilTeardown()
 hooks/
-  use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
+  use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error, refresh }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
   use-zones-count.ts   ← _boulders.getZonesCount query → { counts, loading, refresh } (sends/flashes/projects per zone)
