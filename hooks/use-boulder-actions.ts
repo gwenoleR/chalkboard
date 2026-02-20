@@ -13,6 +13,10 @@ interface UseBoulderActions {
   removeSend: (boulderId: string) => Promise<void>;
   /** Toggle the like on a boulder. */
   toggleLike: (boulderId: string) => Promise<void>;
+  /** Mark a boulder as a project. */
+  addProject: (boulderId: string) => Promise<void>;
+  /** Remove a boulder from projects. */
+  removeProject: (boulderId: string) => Promise<void>;
   /** Post a text comment on a boulder. */
   saveComment: (boulderId: string, text: string) => Promise<void>;
   /** Delete a comment by its ID. */
@@ -27,6 +31,8 @@ interface UseBoulderActions {
  *   _boulders.send      (boulderId, true, userId, false, false, false, false)
  *   _boulders.flash     (boulderId, userId, false, false)
  *   _boulders.notSend   (boulderId, true, userId, false)
+ *   _boulders.project   (boulderId, userId, false, false)
+ *   _boulders.notProject (boulderId)
  *   _boulders.like      (boulderId, userId, false, false)
  *   _boulders.saveComment ({ text, boulderId, coach, fromHomescreen, uploadId })
  *   _boulders.deleteComment (commentId, false)
@@ -52,6 +58,16 @@ export function useBoulderActions(): UseBoulderActions {
     await client.call('_boulders.like', boulderId, USER_ID, false, false);
   }, []);
 
+  const addProject = useCallback(async (boulderId: string) => {
+    await ensureLoggedIn();
+    await client.call('_boulders.project', boulderId, USER_ID, false, false);
+  }, []);
+
+  const removeProject = useCallback(async (boulderId: string) => {
+    await ensureLoggedIn();
+    await client.call('_boulders.notProject', boulderId);
+  }, []);
+
   const saveComment = useCallback(async (boulderId: string, text: string) => {
     await ensureLoggedIn();
     await client.call('_boulders.saveComment', {
@@ -68,5 +84,5 @@ export function useBoulderActions(): UseBoulderActions {
     await client.call('_boulders.deleteComment', commentId, false);
   }, []);
 
-  return { logSend, logFlash, removeSend, toggleLike, saveComment, deleteComment };
+  return { logSend, logFlash, removeSend, toggleLike, addProject, removeProject, saveComment, deleteComment };
 }

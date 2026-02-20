@@ -191,6 +191,14 @@ send({ msg:'method', method:'_boulders.notSend',
 send({ msg:'method', method:'_boulders.like',
   params:[boulderId, userId, false, false] })
 
+// Add to projects
+send({ msg:'method', method:'_boulders.project',
+  params:[boulderId, userId, false, false] })
+
+// Remove from projects
+send({ msg:'method', method:'_boulders.notProject',
+  params:[boulderId] })
+
 // Post a comment (text; uploadId null = no video)
 send({ msg:'method', method:'_boulders.saveComment',
   params:[{ text, boulderId, coach:false, fromHomescreen:false, uploadId:null }] })
@@ -407,7 +415,7 @@ hooks/
   use-boulders.ts      ← subscribe _boulders.list + _boulders.count → { boulders, count, loading, error }
   use-boulder.ts       ← single boulder by id (fast-path collection cache + fallback DDP using last-gym)
   use-boulder-users.ts ← fetch user profiles for a list of IDs via concurrent users.single subs
-  use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, saveComment, deleteComment)
+  use-boulder-actions.ts ← DDP action methods (logSend, logFlash, removeSend, toggleLike, addProject, removeProject, saveComment, deleteComment)
   use-boulder-comments.ts ← subscribe _boulders.comments → { comments, loading, error } (texte + vidéo Mux)
   use-gym.ts           ← subscribe _gyms.info → { gym, loading }
   use-color-scheme.ts  ← hook color scheme (web-safe)
