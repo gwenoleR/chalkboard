@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, Drill, Heart, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Drill, Hammer, Heart, MapPin } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedScrollHandler,
@@ -17,6 +17,7 @@ import { FullScreenImage } from '@/components/FullScreenImage';
 import { UserListSheet } from '@/components/UserListSheet';
 import { Text } from '@/components/ui/text';
 import { isLightColor } from '@/lib/color';
+import { daysUntilTeardown } from '@/lib/utils';
 import { useBoulder } from '@/hooks/use-boulder';
 import { useBoulderActions } from '@/hooks/use-boulder-actions';
 
@@ -28,9 +29,9 @@ const HERO_HEIGHT = 340;
 const PARALLAX_FACTOR = 0.35;
 const PARALLAX_OVERFLOW = HERO_HEIGHT * PARALLAX_FACTOR;
 
-/** Returns a human-readable relative duration from a DDP date or ISO date string. */
-function formatAge(date: { $date: number } | string): string {
-  const ts = typeof date === 'string' ? new Date(date).getTime() : date.$date;
+/** Returns a human-readable relative duration from any DDP date variant. */
+function formatAge(date: Date | { $date: number } | string): string {
+  const ts = date instanceof Date ? date.getTime() : typeof date === 'string' ? new Date(date).getTime() : date.$date;
   const days = Math.floor((Date.now() - ts) / 86_400_000);
   if (days < 7) return `${days}j`;
   const weeks = Math.floor(days / 7);
@@ -375,6 +376,24 @@ export default function BoulderDetailScreen() {
               {t('boulder.openedAgo', { duration: formatAge(boulder.createdAt) })}
             </Text>
           </View>
+
+          {/* Teardown */}
+          {boulder.closedAt ? (() => {
+            const days = daysUntilTeardown(boulder.closedAt);
+            return (
+              <>
+                <View className="h-px bg-border" />
+                <View className="flex-row items-center gap-4 py-5">
+                  <Hammer size={20} color="#94a3b8" />
+                  <Text className="font-dm-sans text-sm text-muted-foreground">
+                    {days !== null && days > 0
+                      ? t('boulder.teardownIn', { days })
+                      : t('boulder.teardownSoon')}
+                  </Text>
+                </View>
+              </>
+            );
+          })() : null}
 
           {/* Zone */}
           {zoneName ? (

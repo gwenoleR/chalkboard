@@ -27,13 +27,22 @@ export interface BoulderComment {
   highlighted?: boolean;
 }
 
-/** EJSON date as returned by the DDP server. */
+/** EJSON date as returned by the DDP server before simpleddp deserialises it. */
 export interface DdpDate {
   $date: number;
 }
 
-/** Converts a DDP date object to a JS Date. */
-export function ddpDateToDate(d: DdpDate): Date {
+/**
+ * A date field from a simpleddp collection.
+ * simpleddp deserialises EJSON `{ $date: ms }` to a JS Date object,
+ * but raw values or mock data may also be a string or the raw DdpDate object.
+ */
+export type DdpDateLike = Date | DdpDate | string;
+
+/** Converts any DDP date variant to a JS Date. */
+export function ddpDateToDate(d: DdpDateLike): Date {
+  if (d instanceof Date) return d;
+  if (typeof d === 'string') return new Date(d);
   return new Date(d.$date);
 }
 
@@ -54,15 +63,14 @@ export interface Boulder {
   /** Zone number in the gym, maps to Gym.zones */
   zone?: number;
   boulderNum?: number;
-  createdAt: DdpDate | string;
+  createdAt: DdpDateLike;
   /**
    * Planned teardown date set by the gym.
-   * Use `ddpDateToDate(boulder.closedAt)` to get a JS Date.
-   * Display "dans X jours" = Math.ceil((closedAt.$date - Date.now()) / 86_400_000)
+   * Use `daysUntilTeardown(boulder.closedAt)` from lib/utils to get days remaining.
    */
-  closedAt?: DdpDate;
-  /** null = open, DdpDate = already closed */
-  isClosed: DdpDate | null;
+  closedAt?: DdpDateLike;
+  /** null = open; DdpDateLike = already closed (actual closure date) */
+  isClosed: DdpDateLike | null;
   sentsCount: number;
   sentsList: string[];
   flashesCount: number;

@@ -24,6 +24,8 @@
     "routeTypes": "Style",
     "routeSetters": "Route setters",
     "openedAgo": "Open for {{duration}}",
+    "teardownIn": "Takedown in {{days}} days",
+    "teardownSoon": "Takedown imminent",
     "sentsListTitle": "Sends",
     "flashesListTitle": "Flashes",
     "likesListTitle": "Likes",

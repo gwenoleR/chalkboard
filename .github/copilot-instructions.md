@@ -297,6 +297,8 @@ const S3 = 'https://socialboulder.s3-eu-west-1.amazonaws.com';
 }
 ```
 
+> **⚠️ Date fields** : simpleddp deserialises EJSON `{ $date: ms }` to JS `Date` objects at runtime. Always use `ddpDateToDate(d)` from `types/boulder.ts` (handles `Date | DdpDate | string`) — never access `.$date` directly.
+
 ### `comments` (via `_boulders.comments`)
 
 User posts on a boulder — can contain text, a video (Mux), or both.

@@ -24,6 +24,8 @@
     "routeTypes": "Style",
     "routeSetters": "Ouvreurs",
     "openedAgo": "Ouvert depuis {{duration}}",
+    "teardownIn": "Démontage dans {{days}} j",
+    "teardownSoon": "Démontage imminent",
     "sentsListTitle": "Enchainements",
     "flashesListTitle": "Flashs",
     "likesListTitle": "Likes",
